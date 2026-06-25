@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>業務タスク管理システム</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+
+<!-- ============================================================
+     CSS
+     ============================================================ -->
+<style>
+
+/* ---------- リセット & CSS変数 ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:        #ffffff;
+  --bg2:       #f7f7f5;
+  --bg3:       #f0f0ec;
+  --text:      #1a1a1a;
+  --text2:     #5a5a5a;
+  --text3:     #999999;
+  --border:    rgba(0,0,0,0.12);
+  --border2:   rgba(0,0,0,0.22);
+  --radius:    8px;
+  --radius-lg: 12px;
+  --blue-bg:   #E6F1FB;  --blue-text:  #0C447C;
+  --green-bg:  #EAF3DE;  --green-text: #27500A;
+  --red-bg:    #FCEBEB;  --red-text:   #791F1F;
+  --warn-bg:   #FEF3E2;  --warn-text:  #7A4100;
+  --danger:    #E24B4A;
+  --warning:   #EF9F27;
+}
+
+/* ---------- ページ全体 ---------- */
+body {
+  font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+  font-size: 14px; color: var(--text);
+  background: var(--bg3); min-height: 100vh; padding: 24px 16px;
+}
+.container    { max-width: 720px; margin: 0 auto; }
+h1            { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
+.app-subtitle { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
+.wrap { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+
+/* ---------- ナビゲーション ---------- */
+.nav { display: flex; border-bottom: 0.5px solid var(--border); background: var(--bg); }
+.nav-btn {
+  flex: 1; padding: 11px 6px;
+  border: none; border-bottom: 2px solid transparent;
+  background: transparent; font-size: 12px; color: var(--text2);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  gap: 5px; transition: all 0.15s; font-family: inherit;
+}
+.nav-btn.active             { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+.nav-btn:hover:not(.active) { background: var(--bg2); }
+
+/* ---------- 画面切り替え ---------- */
+.screen        { display: none; padding: 20px; }
+.screen.active { display: block; }
+
+/* ---------- 統計カード ---------- */
+.stats-row            { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 20px; }
+.stat-card            { background: var(--bg2); border-radius: var(--radius); padding: 12px 14px; }
+.stat-card .label     { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+.stat-card .val       { font-size: 24px; font-weight: 500; }
+
+/* ---------- アプリ内通知バナー ---------- */
+#notif-banner { display: none; margin-bottom: 16px; }
+.notif-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 14px; border-radius: var(--radius);
+  font-size: 13px; margin-bottom: 6px;
+}
+.notif-item:last-child { margin-bottom: 0; }
+.notif-overdue { background: var(--red-bg);  color: var(--red-text);  border: 0.5px solid #f5c6c6; }
+.notif-today   { background: var(--red-bg);  color: var(--red-text);  border: 0.5px solid #f5c6c6; }
+.notif-3day    { background: var(--warn-bg); color: var(--warn-text); border: 0.5px solid #f5d6a0; }
+.notif-7day    { background: var(--blue-bg); color: var(--blue-text); border: 0.5px solid #b3d4f5; }
+.notif-item i  { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.notif-text    { flex: 1; line-height: 1.5; }
+.notif-close   { background: none; border: none; cursor: pointer; font-size: 16px; color: inherit; opacity: 0.6; padding: 0; flex-shrink: 0; }
+.notif-close:hover { opacity: 1; }
+
+/* ---------- タスクカード ---------- */
+.task-card            { border-bottom: 0.5px solid var(--border); padding: 14px 16px; transition: background 0.12s; }
+.task-card:last-child { border-bottom: none; }
+.task-card:hover      { background: var(--bg2); }
+.task-card-header     { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; cursor: pointer; }
+.task-bullet          { color: var(--text3); font-size: 18px; line-height: 1.2; flex-shrink: 0; margin-top: 1px; }
+.task-name            { font-size: 14px; font-weight: 500; flex: 1; }
+.badge                { font-size: 11px; padding: 3px 8px; border-radius: 99px; white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px; }
+.badge-active         { background: var(--blue-bg); color: var(--blue-text); }
+.badge-done           { background: var(--green-bg); color: var(--green-text); }
+.badge-overdue        { background: var(--red-bg); color: var(--red-text); }
+.task-meta            { display: flex; gap: 12px; font-size: 12px; color: var(--text2); flex-wrap: wrap; padding-left: 24px; }
+.task-meta span       { display: flex; align-items: center; gap: 4px; }
+
+/* ---------- 詳細パネル ---------- */
+.detail-panel         { display: none; padding: 12px 16px 14px; background: var(--bg2); border-top: 0.5px solid var(--border); }
+.detail-panel.open    { display: block; }
+.dl                   { display: grid; grid-template-columns: 100px 1fr; gap: 6px 12px; font-size: 13px; margin-bottom: 12px; }
+.dl dt                { color: var(--text2); padding-top: 2px; }
+.dl dd                { color: var(--text); }
+.steps-list           { list-style: none; counter-reset: step; }
+.steps-list li        { counter-increment: step; display: flex; gap: 8px; margin-bottom: 6px; font-size: 13px; align-items: flex-start; }
+.steps-list li::before {
+  content: counter(step); min-width: 20px; height: 20px; border-radius: 50%;
+  background: var(--bg); border: 0.5px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500; flex-shrink: 0; margin-top: 1px;
+}
+.checks-list                         { list-style: none; }
+.checks-list li                      { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+.checks-list li input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; accent-color: var(--text); }
+.sec-title { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; margin-top: 14px; }
+
+/* ---------- ボタン ---------- */
+.action-row        { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.btn               { padding: 7px 14px; font-size: 12px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: transparent; cursor: pointer; color: var(--text); font-family: inherit; transition: all 0.12s; display: inline-flex; align-items: center; gap: 5px; }
+.btn:hover         { background: var(--bg3); }
+.btn-primary       { background: var(--text); color: var(--bg); border-color: var(--text); }
+.btn-primary:hover { opacity: 0.82; }
+.btn-danger        { border-color: var(--danger); color: var(--danger); }
+.btn-danger:hover  { background: var(--red-bg); }
+.btn-sm            { padding: 5px 10px; font-size: 11px; }
+
+/* ---------- フォーム共通 ---------- */
+.form-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 12px; color: var(--text2); font-weight: 500; }
+.form-group input,
+.form-group select,
+.form-group textarea {
+  font-size: 13px; font-family: inherit; padding: 8px 10px;
+  border: 0.5px solid var(--border2); border-radius: var(--radius);
+  background: var(--bg); color: var(--text); outline: none; transition: border-color 0.12s;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color: var(--text); }
+.form-group textarea { resize: vertical; min-height: 72px; }
+.step-input-row,
+.check-input-row       { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+.step-input-row input,
+.check-input-row input { flex: 1; font-size: 13px; padding: 7px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); font-family: inherit; outline: none; }
+.step-input-row input:focus,
+.check-input-row input:focus { border-color: var(--text); }
+.step-num { min-width: 22px; height: 22px; border-radius: 50%; background: var(--bg2); border: 0.5px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--text2); flex-shrink: 0; }
+.add-row-btn { font-size: 12px; color: var(--text2); background: none; border: 0.5px dashed var(--border2); border-radius: var(--radius); padding: 6px 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; margin-top: 4px; font-family: inherit; width: 100%; transition: background 0.12s; }
+.add-row-btn:hover   { background: var(--bg2); }
+.form-section        { margin-bottom: 20px; }
+.form-section-title  { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 0.5px solid var(--border); }
+.remove-btn          { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 17px; line-height: 1; padding: 0 3px; flex-shrink: 0; transition: color 0.12s; }
+.remove-btn:hover    { color: var(--danger); }
+
+/* 並び替えボタン（▲▼） */
+/* ドラッグハンドル */
+.drag-handle         { cursor: grab; color: var(--text3); font-size: 16px; flex-shrink: 0; padding: 0 3px; line-height: 1; user-select: none; transition: color 0.12s; }
+.drag-handle:hover   { color: var(--text); }
+.drag-handle:active  { cursor: grabbing; }
+
+/* D&D中の行スタイル */
+.row-dragging        { opacity: 0.4; }
+.row-drag-over       { border-top: 2px solid var(--text) !important; }
+.template-note       { font-size: 12px; background: var(--blue-bg); color: var(--blue-text); border-radius: var(--radius); padding: 7px 10px; margin-bottom: 10px; display: none; align-items: center; gap: 6px; }
+
+/* ---------- タスク種類管理画面 ---------- */
+.type-card { border-bottom: 0.5px solid var(--border); }
+.type-card:last-child { border-bottom: none; }
+.type-card-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; cursor: pointer; transition: background 0.12s; }
+.type-card-header:hover { background: var(--bg2); }
+.type-card-name   { font-size: 14px; font-weight: 500; flex: 1; }
+.type-card-meta   { font-size: 12px; color: var(--text3); }
+.type-detail      { display: none; padding: 12px 16px 16px; background: var(--bg2); border-top: 0.5px solid var(--border); }
+.type-detail.open { display: block; }
+.type-tpl-section { margin-bottom: 14px; }
+.type-tpl-title   { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 8px; }
+
+/* ---------- 空状態 ---------- */
+.empty-state   { text-align: center; padding: 3rem 1rem; color: var(--text3); }
+.empty-state i { font-size: 36px; display: block; margin-bottom: 8px; }
+
+/* ---------- モーダル（position:fixed） ---------- */
+.modal-overlay        { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.42); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
+.modal-overlay.open   { display: flex; }
+.modal                { background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius-lg); width: 100%; max-width: 600px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+.modal-header         { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 0.5px solid var(--border); flex-shrink: 0; }
+.modal-title          { font-size: 15px; font-weight: 500; }
+.modal-body           { padding: 18px; overflow-y: auto; flex: 1; }
+.modal-footer         { display: flex; gap: 8px; justify-content: flex-end; padding: 13px 18px; border-top: 0.5px solid var(--border); flex-shrink: 0; background: var(--bg); }
+
+/* ブラウザ通知許可バナー */
+#notif-permission-bar { display: none; background: var(--blue-bg); color: var(--blue-text); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px; font-size: 13px; align-items: center; gap: 10px; }
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HTML
+     ============================================================ -->
+
+<div class="container">
+  <h1>業務タスク管理システム</h1>
+  <p class="app-subtitle" id="date-label"></p>
+
+  <div class="wrap">
+
+    <!-- ナビゲーションタブ（4つ） -->
+    <nav class="nav">
+      <button class="nav-btn active" onclick="showScreen('main',this)">
+        <i class="ti ti-layout-list"></i>メイン
+      </button>
+      <button class="nav-btn" onclick="showScreen('register',this)">
+        <i class="ti ti-plus"></i>新規登録
+      </button>
+      <button class="nav-btn" onclick="showScreen('done',this)">
+        <i class="ti ti-circle-check"></i>完了記録
+      </button>
+      <button class="nav-btn" onclick="showScreen('types',this)">
+        <i class="ti ti-settings"></i>種類管理
+      </button>
+    </nav>
+
+
+    <!-- ======================================================
+         画面①：メイン
+         ====================================================== -->
+    <div id="screen-main" class="screen active">
+
+      <!-- ブラウザ通知許可を促すバー -->
+      <div id="notif-permission-bar">
+        <i class="ti ti-bell" style="font-size:16px; flex-shrink:0;"></i>
+        <span style="flex:1;">期限通知のためブラウザ通知を許可してください。</span>
+        <button class="btn btn-primary btn-sm" onclick="requestNotifPermission()">許可する</button>
+        <button class="remove-btn" onclick="document.getElementById('notif-permission-bar').style.display='none'"><i class="ti ti-x"></i></button>
+      </div>
+
+      <!-- アプリ内通知バナー -->
+      <div id="notif-banner"></div>
+
+      <!-- 統計カード -->
+      <div class="stats-row">
+        <div class="stat-card"><div class="label">対応中タスク</div><div class="val" id="stat-active">0</div></div>
+        <div class="stat-card"><div class="label">期限超過</div><div class="val" id="stat-overdue" style="color:var(--danger)">0</div></div>
+        <div class="stat-card"><div class="label">今日期限</div><div class="val" id="stat-today" style="color:var(--warning)">0</div></div>
+      </div>
+
+      <!-- エクスポート／インポート -->
+      <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; align-items:center;">
+        <span style="font-size:12px; color:var(--text2); margin-right:auto;">データの共有・バックアップ</span>
+        <button class="btn" onclick="exportData()"><i class="ti ti-download"></i> エクスポート（JSON）</button>
+        <label class="btn" style="cursor:pointer;">
+          <i class="ti ti-upload"></i> インポート（JSON）
+          <input type="file" accept=".json" onchange="importData(event)" style="display:none;">
+        </label>
+      </div>
+
+      <!-- タスク一覧 -->
+      <div class="wrap" id="main-list"></div>
+    </div>
+
+
+    <!-- ======================================================
+         画面②：新規登録
+         ====================================================== -->
+    <div id="screen-register" class="screen">
+      <div class="form-section">
+        <div class="form-section-title">基本情報</div>
+        <div class="form-grid" style="margin-bottom:12px;">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>タスク名 <span style="color:var(--danger)">*</span></label>
+            <input type="text" id="f-name" placeholder="例：〇〇さんへメール送信">
+          </div>
+          <div class="form-group">
+            <label>タスク種類</label>
+            <select id="f-type" onchange="onTypeChange()">
+              <option value="">選択してください</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>期限</label>
+            <input type="date" id="f-deadline">
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>メモ</label>
+            <textarea id="f-memo" placeholder="備考・補足事項など"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">作業手順</div>
+        <div class="template-note" id="template-note-steps">
+          <i class="ti ti-wand" style="font-size:14px;"></i>タスク種類から仮の手順を自動入力しました。内容を編集できます。
+        </div>
+        <div id="steps-container"></div>
+        <button class="add-row-btn" onclick="addStepField()"><i class="ti ti-plus"></i> 手順を追加</button>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">チェック項目</div>
+        <div class="template-note" id="template-note-checks">
+          <i class="ti ti-wand" style="font-size:14px;"></i>タスク種類から仮のチェック項目を自動入力しました。内容を編集できます。
+        </div>
+        <div id="checks-container"></div>
+        <button class="add-row-btn" onclick="addCheckField()"><i class="ti ti-plus"></i> チェック項目を追加</button>
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button class="btn" onclick="clearForm()">クリア</button>
+        <button class="btn btn-primary" onclick="saveTask()"><i class="ti ti-device-floppy"></i> 登録する</button>
+      </div>
+    </div>
+
+
+    <!-- ======================================================
+         画面③：完了記録
+         ====================================================== -->
+    <div id="screen-done" class="screen">
+      <div class="wrap" id="done-list"></div>
+    </div>
+
+
+    <!-- ======================================================
+         画面④：タスク種類管理
+         ====================================================== -->
+    <div id="screen-types" class="screen">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <div>
+          <div style="font-size:14px; font-weight:500;">タスク種類の管理</div>
+          <div style="font-size:12px; color:var(--text2); margin-top:2px;">種類ごとの作業手順・チェック項目テンプレートを編集できます</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAddType()"><i class="ti ti-plus"></i> 種類を追加</button>
+      </div>
+      <div class="wrap" id="types-list"></div>
+    </div>
+
+  </div><!-- /.wrap（アプリ全体） -->
+</div><!-- /.container -->
+
+
+<!-- ======================================================
+     タスク編集モーダル
+     ====================================================== -->
+<div class="modal-overlay" id="edit-modal" onclick="overlayClick(event,'edit-modal')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">タスクを編集</span>
+      <button class="remove-btn" onclick="closeModal('edit-modal')" style="font-size:22px;"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">
+        <div class="form-section-title">基本情報</div>
+        <div class="form-grid" style="margin-bottom:12px;">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>タスク名 <span style="color:var(--danger)">*</span></label>
+            <input type="text" id="e-name">
+          </div>
+          <div class="form-group">
+            <label>タスク種類</label>
+            <select id="e-type"></select>
+          </div>
+          <div class="form-group">
+            <label>期限</label>
+            <input type="date" id="e-deadline">
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label>メモ</label>
+            <textarea id="e-memo"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">作業手順</div>
+        <div id="e-steps-container"></div>
+        <button class="add-row-btn" onclick="addEditStepField()"><i class="ti ti-plus"></i> 手順を追加</button>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">チェック項目</div>
+        <div id="e-checks-container"></div>
+        <button class="add-row-btn" onclick="addEditCheckField()"><i class="ti ti-plus"></i> チェック項目を追加</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('edit-modal')"><i class="ti ti-x"></i> キャンセル</button>
+      <button class="btn btn-primary" onclick="saveEdit()"><i class="ti ti-device-floppy"></i> 保存する</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ======================================================
+     タスク種類 追加／編集モーダル
+     ====================================================== -->
+<div class="modal-overlay" id="type-modal" onclick="overlayClick(event,'type-modal')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="type-modal-title">種類を追加</span>
+      <button class="remove-btn" onclick="closeModal('type-modal')" style="font-size:22px;"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">
+        <div class="form-section-title">種類名・設定</div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>タスク種類名 <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="tm-name" placeholder="例：請求書送付、社内申請など">
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;padding:10px 12px;background:var(--bg2);border-radius:var(--radius);border:0.5px solid var(--border);">
+          <input type="checkbox" id="tm-recurring" style="width:15px;height:15px;accent-color:var(--text);cursor:pointer;">
+          <div>
+            <div style="font-weight:500;">完了時に次回の予定を確認する</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px;">ONにすると、このタスクを完了にした際に次回の予定登録を促すモーダルが表示されます</div>
+          </div>
+        </label>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">作業手順テンプレート</div>
+        <div id="tm-steps-container"></div>
+        <button class="add-row-btn" onclick="addTmStepField()"><i class="ti ti-plus"></i> 手順を追加</button>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title">チェック項目テンプレート</div>
+        <div id="tm-checks-container"></div>
+        <button class="add-row-btn" onclick="addTmCheckField()"><i class="ti ti-plus"></i> チェック項目を追加</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('type-modal')"><i class="ti ti-x"></i> キャンセル</button>
+      <button class="btn btn-primary" onclick="saveTypeModal()"><i class="ti ti-device-floppy"></i> 保存する</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     JavaScript
+     ============================================================ -->
+<script>
+
+/* =============================================================
+   データ構造
+   tasks[]       : タスク一覧
+   taskTypes[]   : タスク種類（名前・手順・チェック項目テンプレート）
+   ============================================================= */
+
+let tasks     = [];
+let taskTypes = [];
+let editingId      = null;
+let editingTypeKey = null;
+
+/* =============================================================
+   API クライアント
+   server.py が起動している場合は SQLite DB に保存。
+   接続できない場合は自動的に localStorage にフォールバック。
+   ============================================================= */
+const API = 'http://localhost:8080/api';
+let useAPI = false;  /* 起動時の疎通確認後に true になる */
+
+/* サーバーへの疎通確認（起動時1回だけ呼ぶ） */
+async function checkAPI() {
+  try {
+    const res = await fetch(`${API}/task_types`, { signal: AbortSignal.timeout(1500) });
+    if (res.ok) { useAPI = true; console.log('[API] サーバー接続OK'); }
+  } catch (e) { console.warn('[API] サーバー未接続 → localStorageを使用'); }
+}
+
+/* ── タスク CRUD ── */
+async function saveTasks() {
+  if (!useAPI) {
+    try { localStorage.setItem('biz-tasks-v4', JSON.stringify(tasks)); } catch(e){}
+    return;
+  }
+  /* API モードでは個別の操作時（saveTask/saveEdit等）に保存するため、ここでは何もしない */
+}
+
+async function apiCreateTask(task) {
+  if (!useAPI) { tasks.unshift(task); await saveTasks(); return; }
+  await fetch(`${API}/tasks`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(task),
+  });
+}
+
+async function apiUpdateTask(task) {
+  if (!useAPI) {
+    const i = tasks.findIndex(x => x.id === task.id);
+    if (i !== -1) tasks[i] = task;
+    await saveTasks();
+    return;
+  }
+  await fetch(`${API}/tasks/${task.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(task),
+  });
+}
+
+async function apiDeleteTask(id) {
+  if (!useAPI) { tasks = tasks.filter(x => x.id !== id); await saveTasks(); return; }
+  await fetch(`${API}/tasks/${id}`, { method: 'DELETE' });
+}
+
+async function loadTasks() {
+  if (!useAPI) {
+    try { tasks = JSON.parse(localStorage.getItem('biz-tasks-v4') || '[]'); } catch(e){ tasks = []; }
+    return;
+  }
+  const res = await fetch(`${API}/tasks`);
+  const json = await res.json();
+  tasks = json.data || [];
+}
+
+/* ── タスク種類 CRUD ── */
+async function saveTaskTypes() {
+  if (!useAPI) {
+    try { localStorage.setItem('biz-types-v1', JSON.stringify(taskTypes)); } catch(e){}
+  }
+}
+
+async function apiCreateType(t) {
+  if (!useAPI) { taskTypes.push(t); await saveTaskTypes(); return; }
+  await fetch(`${API}/task_types`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(t),
+  });
+}
+
+async function apiUpdateType(t) {
+  if (!useAPI) {
+    const i = taskTypes.findIndex(x => x.key === t.key);
+    if (i !== -1) taskTypes[i] = t;
+    await saveTaskTypes();
+    return;
+  }
+  await fetch(`${API}/task_types/${t.key}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(t),
+  });
+}
+
+async function apiDeleteType(key) {
+  if (!useAPI) { taskTypes = taskTypes.filter(x => x.key !== key); await saveTaskTypes(); return; }
+  await fetch(`${API}/task_types/${key}`, { method: 'DELETE' });
+}
+
+async function loadTaskTypes() {
+  if (!useAPI) {
+    try { taskTypes = JSON.parse(localStorage.getItem('biz-types-v1') || '[]'); } catch(e){ taskTypes = []; }
+    return;
+  }
+  const res  = await fetch(`${API}/task_types`);
+  const json = await res.json();
+  taskTypes  = json.data || [];
+}
+
+/* ---------- デフォルト種類（DB/localStorage が空のとき挿入） ---------- */
+const DEFAULT_TYPES = [
+  { key:'mail',    name:'メール送信',  recurring:false, steps:['メールソフト（Outlookなど）を開く','「新規メール作成」をクリックする','宛先・件名・本文を入力する','添付ファイルがあれば添付する','送信前に内容を最終確認する','送信ボタンを押す'], checks:['宛名は正しいですか？','件名は入力していますか？','添付ファイルは付いていますか？','CC・BCCの設定は合っていますか？','誤字脱字はありませんか？'] },
+  { key:'report',  name:'報告書提出',  recurring:true,  steps:['テンプレートファイルを開く','必要なデータ・数値を入力する','グラフや表を更新する','上長に内容の確認を依頼する','修正があれば対応する','メールに添付して提出先に送付する'], checks:['数値に誤りはありませんか？','前月比・前年比の記載はありますか？','上長の承認は得ましたか？','提出期限に間に合っていますか？'] },
+  { key:'meeting', name:'会議準備',    recurring:false, steps:['会議の目的・アジェンダを整理する','参加者に案内メールを送る','会議室・Zoomリンクを確保する','資料を作成・共有する','機器（プロジェクター等）の動作確認をする'], checks:['参加者全員に案内が届いていますか？','資料は事前共有しましたか？','会議室の予約は完了していますか？','議事録担当者は決まっていますか？'] },
+  { key:'doc',     name:'書類作成',    recurring:false, steps:['作成する書類の目的・対象を確認する','必要な情報・データを収集する','下書きを作成する','上長または担当者にレビューを依頼する','修正対応後、最終版を保存・提出する'], checks:['記載内容に誤りはありませんか？','誤字脱字の確認をしましたか？','承認は取得しましたか？','保存場所・ファイル名は規定通りですか？'] },
+  { key:'phone',   name:'電話対応',    recurring:false, steps:['相手の会社名・氏名・用件を確認する','担当者が不在の場合は折り返し連絡を約束する','用件の内容をメモに記録する','担当者に内容を速やかに伝える','必要に応じて折り返し電話をする'], checks:['相手の名前・連絡先は正確に記録しましたか？','担当者への引き継ぎは完了しましたか？','折り返し連絡が必要な場合は期限を確認しましたか？'] },
+  { key:'other',   name:'その他',      recurring:false, steps:[], checks:[] },
+];
+
+
+/* =============================================================
+   ユーティリティ
+   ============================================================= */
+const todayStr  = () => new Date().toISOString().slice(0,10);
+
+/** 現在日時を "YYYY-MM-DDTHH:MM" 形式で返す */
+const nowStr = () => {
+  const d = new Date(), pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+/** "YYYY-MM-DDTHH:MM" → "YYYY/MM/DD HH:MM"、日付のみの場合も対応 */
+const fmtDate = d => {
+  if (!d) return '—';
+  if (d.includes('T')) {
+    const [date, time] = d.split('T');
+    const [y,m,dd] = date.split('-');
+    return `${y}/${m}/${dd} ${time}`;
+  }
+  const [y,m,dd] = d.split('-');
+  return `${y}/${m}/${dd}`;
+};
+
+const isOverdue = d  => d && d.slice(0,10) < todayStr();
+const isTodayDue= d  => d === todayStr();
+const diffDays  = d  => { if(!d) return null; const ms = new Date(d) - new Date(todayStr()); return Math.ceil(ms/(1000*60*60*24)); };
+const esc       = s  => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* タスク種類名 → タイプオブジェクトを返す */
+const findType  = name => taskTypes.find(t => t.name === name);
+
+
+/* =============================================================
+   画面切り替え
+   ============================================================= */
+async function showScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  btn.classList.add('active');
+
+  if (name === 'main') {
+    await loadTasks();
+    renderMain();
+    checkNotifications();
+  }
+  if (name === 'done') {
+    await loadTasks();
+    renderDone();
+  }
+  if (name === 'types') {
+    await loadTaskTypes();
+    renderTypes();
+  }
+  if (name === 'register') {
+    await loadTaskTypes();
+    refreshTypeSelects();
+    /* 手順・チェック行が消えていたら初期行を補充 */
+    if (!document.getElementById('steps-container').children.length)  addStepField();
+    if (!document.getElementById('checks-container').children.length) addCheckField();
+  }
+}
+
+
+/* =============================================================
+   通知機能
+   ============================================================= */
+
+/**
+ * アプリ起動時・メイン画面表示時に呼ばれる。
+ * ① アプリ内バナー（常に表示）
+ * ② ブラウザ通知（許可済みの場合のみ）
+ * 対象：期限超過・当日・3日前・7日前
+ */
+function checkNotifications() {
+  const active = tasks.filter(t => t.status === 'active' && t.deadline);
+  const items  = [];
+
+  active.forEach(t => {
+    const d = diffDays(t.deadline);
+    if (d < 0)       items.push({ task: t, level: 'overdue', d });
+    else if (d === 0) items.push({ task: t, level: 'today',   d });
+    else if (d <= 3)  items.push({ task: t, level: '3day',    d });
+    else if (d <= 7)  items.push({ task: t, level: '7day',    d });
+  });
+
+  renderNotifBanner(items);
+  sendBrowserNotifs(items);
+  checkNotifPermission();
+}
+
+function levelLabel(level, d) {
+  if (level === 'overdue') return `期限超過（${Math.abs(d)}日経過）`;
+  if (level === 'today')   return '本日期限';
+  if (d === 1)             return '本日が期限日';  /* 翌日＝明日期限 → "本日が期限日" */
+  return `期限まで${d}日`;
+}
+function levelIcon(level) {
+  if (level === 'overdue') return 'ti-alert-circle';
+  if (level === 'today')   return 'ti-alarm';
+  if (level === '3day')    return 'ti-clock-exclamation';
+  return 'ti-clock';
+}
+function levelClass(level) {
+  if (level === 'overdue') return 'notif-overdue';
+  if (level === 'today')   return 'notif-today';
+  if (level === '3day')    return 'notif-3day';
+  return 'notif-7day';
+}
+
+/* アプリ内バナーを描画 */
+function renderNotifBanner(items) {
+  const el = document.getElementById('notif-banner');
+  if (!items.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+
+  el.style.display = 'block';
+  el.innerHTML = items.map((it, idx) => `
+    <div class="notif-item ${levelClass(it.level)}" id="notif-${idx}">
+      <i class="ti ${levelIcon(it.level)} notif-icon"></i>
+      <div class="notif-text">
+        <strong>【${levelLabel(it.level, it.d)}】</strong> ${esc(it.task.name)}
+        <span style="margin-left:6px; opacity:0.7; font-size:11px;">期限: ${fmtDate(it.task.deadline)}</span>
+      </div>
+      <button class="notif-close" onclick="dismissNotif(${idx})" aria-label="閉じる"><i class="ti ti-x"></i></button>
+    </div>`).join('');
+}
+
+/* 個別バナーを閉じる */
+function dismissNotif(idx) {
+  const el = document.getElementById('notif-' + idx);
+  if (el) el.remove();
+  if (!document.querySelector('#notif-banner .notif-item')) {
+    document.getElementById('notif-banner').style.display = 'none';
+  }
+}
+
+/* ブラウザ通知を送る（許可済み・かつ未送信のもののみ） */
+function sendBrowserNotifs(items) {
+  if (Notification.permission !== 'granted') return;
+  const sentKey  = 'biz-notif-sent-' + todayStr();
+  let   sentList = [];
+  try { sentList = JSON.parse(localStorage.getItem(sentKey) || '[]'); } catch(e){}
+
+  items.forEach(it => {
+    const uid = `${it.task.id}-${it.level}`;
+    if (sentList.includes(uid)) return;
+    new Notification('業務タスク管理', {
+      body: `【${levelLabel(it.level, it.d)}】${it.task.name}`,
+      icon: '',
+    });
+    sentList.push(uid);
+  });
+  try { localStorage.setItem(sentKey, JSON.stringify(sentList)); } catch(e){}
+}
+
+/* ブラウザ通知の許可バーを表示するか判断 */
+function checkNotifPermission() {
+  const bar = document.getElementById('notif-permission-bar');
+  if (Notification.permission === 'default') {
+    bar.style.display = 'flex';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+/* 通知許可をリクエスト */
+function requestNotifPermission() {
+  Notification.requestPermission().then(p => {
+    checkNotifPermission();
+    if (p === 'granted') checkNotifications();
+  });
+}
+
+
+/* =============================================================
+   メイン画面：描画
+   ============================================================= */
+function renderMain() {
+  const active = tasks.filter(t => t.status === 'active');
+  document.getElementById('stat-active').textContent  = active.length;
+  document.getElementById('stat-overdue').textContent = active.filter(t => isOverdue(t.deadline)).length;
+  document.getElementById('stat-today').textContent   = active.filter(t => isTodayDue(t.deadline)).length;
+
+  const el = document.getElementById('main-list');
+  if (!active.length) {
+    el.innerHTML = '<div class="empty-state"><i class="ti ti-clipboard-check"></i>対応中のタスクはありません</div>';
+    return;
+  }
+  el.innerHTML = active.map(t => taskCardHTML(t)).join('');
+}
+
+
+/* =============================================================
+   完了記録画面：描画
+   ============================================================= */
+function renderDone() {
+  const done = tasks.filter(t => t.status === 'done');
+  const el   = document.getElementById('done-list');
+  if (!done.length) {
+    el.innerHTML = '<div class="empty-state"><i class="ti ti-mood-happy"></i>完了済みのタスクはありません</div>';
+    return;
+  }
+  el.innerHTML = done.map(t => taskCardHTML(t)).join('');
+}
+
+
+/* =============================================================
+   タスクカードHTML生成
+   ============================================================= */
+function taskCardHTML(t) {
+  const overdue  = isOverdue(t.deadline)  && t.status === 'active';
+  const todayDue = isTodayDue(t.deadline) && t.status === 'active';
+  const d        = diffDays(t.deadline);
+
+  /* 期限ラベル（7日以内は色付き） */
+  let deadlineStyle = '';
+  if (overdue)       deadlineStyle = 'color:var(--danger)';
+  else if (todayDue) deadlineStyle = 'color:var(--danger)';
+  else if (d !== null && d <= 3) deadlineStyle = 'color:var(--danger)';
+  else if (d !== null && d <= 7) deadlineStyle = 'color:var(--warning)';
+
+  const badgeHtml = t.status === 'done'
+    ? '<span class="badge badge-done"><i class="ti ti-check" style="font-size:11px"></i> 対応完了</span>'
+    : overdue
+      ? '<span class="badge badge-overdue"><i class="ti ti-alert-triangle" style="font-size:11px"></i> 期限超過</span>'
+      : '<span class="badge badge-active">対応中</span>';
+
+  const checkedCount = (t.checksDone||[]).length;
+  const totalChecks  = (t.checks||[]).length;
+
+  const stepsHtml = (t.steps && t.steps.length)
+    ? `<div class="sec-title">作業手順</div><ol class="steps-list">${t.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>` : '';
+
+  const checksHtml = (t.checks && t.checks.length)
+    ? `<div class="sec-title">チェック項目</div><ul class="checks-list">
+        ${t.checks.map(c=>`<li><input type="checkbox" ${(t.checksDone||[]).includes(c)?'checked':''} onchange="toggleCheck(${t.id},'${c.replace(/'/g,"\\'")}',this.checked)"><span>${esc(c)}</span></li>`).join('')}
+       </ul>` : '';
+
+  const actionBtn = t.status === 'active'
+    ? `<button class="btn btn-primary" onclick="completeTask(${t.id},event)"><i class="ti ti-check"></i> 対応完了にする</button>`
+    : `<button class="btn" onclick="reopenTask(${t.id},event)"><i class="ti ti-refresh"></i> 対応中に戻す</button>`;
+
+  return `
+    <div class="task-card" id="tcard-${t.id}">
+      <div class="task-card-header" onclick="toggleDetail(${t.id})">
+        <span class="task-bullet">▪</span>
+        <div class="task-name">${esc(t.name)}</div>
+        ${badgeHtml}
+      </div>
+      <div class="task-meta">
+        <span><i class="ti ti-tag"></i>${esc(t.type||'—')}</span>
+        <span><i class="ti ti-calendar-due"></i>期限: <span style="${deadlineStyle}">${fmtDate(t.deadline)}</span></span>
+        ${t.status==='done' ? `<span><i class="ti ti-calendar-check"></i>完了: ${fmtDate(t.completedDate)}</span>` : ''}
+        ${totalChecks ? `<span><i class="ti ti-checkbox"></i>${checkedCount}/${totalChecks}</span>` : ''}
+      </div>
+      <div class="detail-panel" id="detail-${t.id}">
+        <dl class="dl">
+          <dt>登録日時</dt><dd>${fmtDate(t.created)}</dd>
+          <dt>期限</dt><dd style="${isOverdue(t.deadline)&&t.status==='active'?'color:var(--danger)':''}">${fmtDate(t.deadline)}</dd>
+          ${t.status==='done' ? `<dt>完了日時</dt><dd>${fmtDate(t.completedDate)}</dd>` : ''}
+          <dt>メモ</dt><dd>${esc(t.memo||'—')}</dd>
+        </dl>
+        ${stepsHtml}
+        ${checksHtml}
+        <div class="action-row">
+          <button class="btn" onclick="openEdit(${t.id},event)"><i class="ti ti-edit"></i> 編集</button>
+          ${actionBtn}
+          <button class="btn btn-danger" onclick="deleteTask(${t.id},event)"><i class="ti ti-trash"></i> 削除</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+
+/* =============================================================
+   タスク操作
+   ============================================================= */
+function toggleDetail(id) {
+  const el = document.getElementById('detail-' + id);
+  if (el) el.classList.toggle('open');
+}
+
+function toggleCheck(id, check, checked) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  if (!t.checksDone) t.checksDone = [];
+  if (checked) { if (!t.checksDone.includes(check)) t.checksDone.push(check); }
+  else          { t.checksDone = t.checksDone.filter(c => c !== check); }
+  apiUpdateTask(t);
+}
+
+/* 「次回予定確認」判定：種類管理の recurring フラグを参照 */
+function isRecurringType(typeName) {
+  if (!typeName) return false;
+  const t = taskTypes.find(x => x.name === typeName);
+  return t ? !!t.recurring : false;
+}
+
+let _nextSrcId = null; /* 次回タスクの複製元ID */
+
+async function completeTask(id, e) {
+  e.stopPropagation();
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  t.status = 'done'; t.completedDate = nowStr();
+  await apiUpdateTask(t); renderMain(); checkNotifications();
+
+  /* 報告書・定期系タスクなら次回予定確認モーダルを表示 */
+  if (isRecurringType(t.type)) {
+    _nextSrcId = id;
+    document.getElementById('next-modal-desc').textContent =
+      `「${t.name}」が完了しました。
+同じ内容で次回の予定を登録しますか？`;
+    document.getElementById('next-deadline').value = '';
+    document.getElementById('next-memo').value = '';
+    openModal('next-modal');
+  }
+}
+
+async function saveNextTask() {
+  const src = tasks.find(x => x.id === _nextSrcId);
+  if (!src) { closeModal('next-modal'); return; }
+
+  const deadline = document.getElementById('next-deadline').value;
+  const memo     = document.getElementById('next-memo').value.trim();
+
+  const newTask = { id: Date.now(), name: src.name, type: src.type, created: nowStr(), deadline, completedDate: '', memo: memo || src.memo, status: 'active', steps: [...(src.steps||[])], checks: [...(src.checks||[])], checksDone: [] };
+  await apiCreateTask(newTask);
+  tasks = [newTask, ...tasks];
+  closeModal('next-modal');
+  renderMain();
+  checkNotifications();
+}
+
+
+async function reopenTask(id, e) {
+  e.stopPropagation();
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  t.status = 'active'; t.completedDate = '';
+  await apiUpdateTask(t); renderDone();
+}
+
+async function deleteTask(id, e) {
+  e.stopPropagation();
+  if (!confirm('このタスクを削除しますか？')) return;
+  await apiDeleteTask(id);
+  tasks = tasks.filter(x => x.id !== id);
+  const activeScreen = document.querySelector('.screen.active').id;
+  if (activeScreen === 'screen-main') { renderMain(); checkNotifications(); } else renderDone();
+}
+
+
+/* =============================================================
+   タスク編集モーダル
+   ============================================================= */
+function openEdit(id, e) {
+  e.stopPropagation();
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  editingId = id;
+  document.getElementById('e-name').value     = t.name     || '';
+  document.getElementById('e-deadline').value = t.deadline || '';
+  document.getElementById('e-memo').value     = t.memo     || '';
+  refreshTypeSelects();
+  document.getElementById('e-type').value = t.type || '';
+  const sc = document.getElementById('e-steps-container');  sc.innerHTML = '';
+  (t.steps  || []).forEach(s => addEditStepField(s));
+  const cc = document.getElementById('e-checks-container'); cc.innerHTML = '';
+  (t.checks || []).forEach(c => addEditCheckField(c));
+  openModal('edit-modal');
+}
+
+async function saveEdit() {
+  const name = document.getElementById('e-name').value.trim();
+  if (!name) { alert('タスク名を入力してください'); return; }
+  const t = tasks.find(x => x.id === editingId);
+  if (!t) return;
+  t.name     = name;
+  t.type     = document.getElementById('e-type').value;
+  t.deadline = document.getElementById('e-deadline').value;
+  t.memo     = document.getElementById('e-memo').value.trim();
+  t.steps    = Array.from(document.querySelectorAll('#e-steps-container input')).map(i => i.value.trim()).filter(Boolean);
+  t.checks   = Array.from(document.querySelectorAll('#e-checks-container input')).map(i => i.value.trim()).filter(Boolean);
+  t.checksDone = (t.checksDone||[]).filter(c => t.checks.includes(c));
+  await apiUpdateTask(t);
+  const idx = tasks.findIndex(x => x.id === t.id);
+  if (idx !== -1) tasks[idx] = t;
+  closeModal('edit-modal');
+  const activeScreen = document.querySelector('.screen.active').id;
+  if (activeScreen === 'screen-main') { renderMain(); checkNotifications(); } else renderDone();
+}
+
+function addEditStepField(val='') {
+  const c   = document.getElementById('e-steps-container');
+  const row = document.createElement('div');
+  row.className = 'step-input-row';
+  row.innerHTML = `<div class="step-num">${c.children.length+1}</div>
+    <input type="text" value="${esc(val)}" placeholder="手順を入力...">
+    <span class="drag-handle" draggable="false" aria-hidden="true"><i class="ti ti-grip-vertical"></i></span>
+    <button class="remove-btn" onclick="removeRowEl(this,'step','e')"><i class="ti ti-x"></i></button>`;
+  c.appendChild(row); updateNums('e-steps-container'); initDragSort('e-steps-container');
+}
+
+function addEditCheckField(val='') {
+  const c   = document.getElementById('e-checks-container');
+  const row = document.createElement('div');
+  row.className = 'check-input-row';
+  row.innerHTML = `<i class="ti ti-circle" style="font-size:14px;color:var(--text3);flex-shrink:0;"></i>
+    <input type="text" value="${esc(val)}" placeholder="チェック項目を入力...">
+    <span class="drag-handle" draggable="false" aria-hidden="true"><i class="ti ti-grip-vertical"></i></span>
+    <button class="remove-btn" onclick="removeRowEl(this,'check','e')"><i class="ti ti-x"></i></button>`;
+  c.appendChild(row); initDragSort('e-checks-container');
+}
+
+
+/* =============================================================
+   新規登録フォーム
+   ============================================================= */
+function onTypeChange() {
+  const val = document.getElementById('f-type').value;
+  const tpl = findType(val);
+  const sc  = document.getElementById('steps-container');
+  const cc  = document.getElementById('checks-container');
+  const sn  = document.getElementById('template-note-steps');
+  const cn  = document.getElementById('template-note-checks');
+
+  if (tpl && (tpl.steps.length || tpl.checks.length)) {
+    sc.innerHTML = ''; tpl.steps.forEach(s => addStepField(s));
+    cc.innerHTML = ''; tpl.checks.forEach(c => addCheckField(c));
+    sn.style.display = tpl.steps.length  ? 'flex' : 'none';
+    cn.style.display = tpl.checks.length ? 'flex' : 'none';
+  } else {
+    sn.style.display = 'none'; cn.style.display = 'none';
+    if (!sc.children.length) addStepField();
+    if (!cc.children.length) addCheckField();
+  }
+}
+
+function addStepField(val='') {
+  const c   = document.getElementById('steps-container');
+  const row = document.createElement('div');
+  row.className = 'step-input-row';
+  row.innerHTML = `<div class="step-num">${c.children.length+1}</div>
+    <input type="text" value="${esc(val)}" placeholder="手順を入力...">
+    <span class="drag-handle" draggable="false" aria-hidden="true"><i class="ti ti-grip-vertical"></i></span>
+    <button class="remove-btn" onclick="removeRowEl(this,'step','f')"><i class="ti ti-x"></i></button>`;
+  c.appendChild(row); updateNums('steps-container'); initDragSort('steps-container');
+}
+
+function addCheckField(val='') {
+  const c   = document.getElementById('checks-container');
+  const row = document.createElement('div');
+  row.className = 'check-input-row';
+  row.innerHTML = `<i class="ti ti-circle" style="font-size:14px;color:var(--text3);flex-shrink:0;"></i>
+    <input type="text" value="${esc(val)}" placeholder="チェック項目を入力...">
+    <span class="drag-handle" draggable="false" aria-hidden="true"><i class="ti ti-grip-vertical"></i></span>
+    <button class="remove-btn" onclick="removeRowEl(this,'check','f')"><i class="ti ti-x"></i></button>`;
+  c.appendChild(row); initDragSort('checks-container');
+}
+
+function clearForm() {
+  ['f-name','f-deadline','f-memo'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('f-type').value = '';
+  document.getElementById('steps-container').innerHTML  = '';
+  document.getElementById('checks-container').innerHTML = '';
+  document.getElementById('template-note-steps').style.display  = 'none';
+  document.getElementById('template-note-checks').style.display = 'none';
+  addStepField(); addCheckField();
+}
+
+async function saveTask() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('タスク名を入力してください'); return; }
+  const newTask = { id: Date.now(), name, type: document.getElementById('f-type').value, created: nowStr(), deadline: document.getElementById('f-deadline').value, completedDate: '', memo: document.getElementById('f-memo').value.trim(), status: 'active', steps: Array.from(document.querySelectorAll('#steps-container input')).map(i=>i.value.trim()).filter(Boolean), checks: Array.from(document.querySelectorAll('#checks-container input')).map(i=>i.value.trim()).filter(Boolean), checksDone: [] };
+  await apiCreateTask(newTask);
+  tasks = [newTask, ...tasks];
+  clearForm();
+  /* メイン画面へ移動 */
+  const mainBtn = document.querySelector('[onclick="showScreen(\'main\',this)"]');
+  await showScreen('main', mainBtn);
+}
+
+
+/* =============================================================
+   タスク種類管理画面
+   ============================================================= */
+function renderTypes() {
+  const el = document.getElementById('types-list');
+  if (!taskTypes.length) {
+    el.innerHTML = '<div class="empty-state"><i class="ti ti-tag"></i>タスク種類がありません</div>';
+    return;
+  }
+  el.innerHTML = taskTypes.map(t => `
+    <div class="type-card" id="typecard-${t.key}">
+      <div class="type-card-header" onclick="toggleTypeDetail('${t.key}')">
+        <span class="task-bullet" style="font-size:16px;">▪</span>
+        <div class="type-card-name">${esc(t.name)}</div>
+        <span class="type-card-meta">${t.steps.length}手順 / ${t.checks.length}チェック項目</span>
+        <div style="display:flex;gap:6px;margin-left:8px;align-items:center;" onclick="event.stopPropagation()">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap;"
+                 title="ONにすると完了時に次回の予定登録を促します">
+            <input type="checkbox" ${t.recurring?'checked':''} onchange="toggleRecurring('${t.key}',this.checked)"
+                   style="width:14px;height:14px;accent-color:var(--text);cursor:pointer;">
+            次回確認
+          </label>
+          <button class="btn btn-sm" onclick="openEditType('${t.key}')"><i class="ti ti-edit"></i> 編集</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteType('${t.key}')"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      <div class="type-detail" id="type-detail-${t.key}">
+        ${t.steps.length ? `
+          <div class="type-tpl-section">
+            <div class="type-tpl-title">作業手順テンプレート</div>
+            <ol class="steps-list">${t.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
+          </div>` : ''}
+        ${t.checks.length ? `
+          <div class="type-tpl-section">
+            <div class="type-tpl-title">チェック項目テンプレート</div>
+            <ul class="checks-list">${t.checks.map(c=>`<li><i class="ti ti-circle" style="font-size:12px;color:var(--text3);flex-shrink:0;"></i><span>${esc(c)}</span></li>`).join('')}</ul>
+          </div>` : ''}
+        ${!t.steps.length && !t.checks.length ? '<div style="font-size:13px;color:var(--text3);">テンプレートが登録されていません</div>' : ''}
+      </div>
+    </div>`).join('');
+}
+
+/* 種類カードの「次回確認」トグルを直接変更 */
+async function toggleRecurring(key, checked) {
+  const t = taskTypes.find(x => x.key === key);
+  if (!t) return;
+  t.recurring = checked;
+  await apiUpdateType(t);
+}
+
+function toggleTypeDetail(key) {
+  const el = document.getElementById('type-detail-' + key);
+  if (el) el.classList.toggle('open');
+}
+
+async function deleteType(key) {
+  const t = taskTypes.find(x => x.key === key);
+  if (!t) return;
+  if (!confirm(`「${t.name}」を削除しますか？\nこの種類が設定されているタスクには影響しません。`)) return;
+  await apiDeleteType(key);
+  taskTypes = taskTypes.filter(x => x.key !== key);
+  refreshTypeSelects();
+  renderTypes();
+}
+
+/* 種類追加モーダルを開く */
+function openAddType() {
+  editingTypeKey = null;
+  document.getElementById('type-modal-title').textContent = '種類を追加';
+  document.getElementById('tm-name').value = '';
+  document.getElementById('tm-recurring').checked = false;
+  document.getElementById('tm-steps-container').innerHTML  = '';
+  document.getElementById('tm-checks-container').innerHTML = '';
+  addTmStepField(); addTmCheckField();
+  openModal('type-modal');
+}
+
+/* 種類編集モーダルを開く */
+function openEditType(key) {
+  const t = taskTypes.find(x => x.key === key);
+  if (!t) return;
+  editingTypeKey = key;
+  document.getElementById('type-modal-title').textContent = '種類を編集';
+  document.getElementById('tm-name').value = t.name;
+  document.getElementById('tm-recurring').checked = !!t.recurring;
+  const sc = document.getElementById('tm-steps-container');  sc.innerHTML = '';
+  t.steps.forEach(s  => addTmStepField(s));
+  const cc = document.getElementById('tm-checks-container'); cc.innerHTML = '';
+  t.checks.forEach(c => addTmCheckField(c));
+  if (!sc.children.length) addTmStepField();
+  if (!cc.children.length) addTmCheckField();
+  openModal('type-modal');
+}
+
+/* 種類モーダル：保存 */
+async function saveTypeModal() {
+  const name = document.getElementById('tm-name').value.trim();
+  if (!name) { alert('種類名を入力してください'); return; }
+  const steps  = Array.from(document.querySelectorAll('#tm-steps-container input')).map(i=>i.value.trim()).filter(Boolean);
+  const checks = Array.from(document.querySelectorAll('#tm-checks-container input')).map(i=>i.value.trim()).filter(Boolean);
+
+  const recurring = document.getElementById('tm-recurring').checked;
+
+  if (editingTypeKey) {
+    const t = taskTypes.find(x => x.key === editingTypeKey);
+    if (t) { t.name = name; t.steps = steps; t.checks = checks; t.recurring = recurring;
+      await apiUpdateType(t); }
+  } else {
+    if (taskTypes.find(x => x.name === name)) { alert('同じ名前の種類がすでに存在します'); return; }
+    const nt = { key: 'type_' + Date.now(), name, steps, checks, recurring };
+    await apiCreateType(nt);
+    taskTypes.push(nt);
+  }
+  refreshTypeSelects();
+  closeModal('type-modal');
+  renderTypes();
+}
+
+function addTmStepField(val='') {
+  const c   = document.getElementById('tm-steps-container');
+  const row = document.createElement('div');
+  row.className = 'step-input-row';
+  row.innerHTML = `<div class="step-num">${c.children.length+1}</div>
+    <input type="text" value="${esc(val)}" placeholder="手順を入力...">
+    <span class="drag-handle" draggable="false" aria-hidden="true"><i class="ti ti-grip-vertical"></i></span>
+    <button class="remove-btn" onclick="removeRowEl(this,'step','tm')"><i class="ti ti-x"></i></button>`;
+  c.appendChild(row); updateNums('tm-steps-container'); initDragSort('tm-steps-container');
+}
+
+function addTmCheckField(val='') {
+  const c   = document.getElementById('tm-checks-container');
+  const row = document.createElement('div');
+  row.className = 'check-input-row';
+  row.innerHTML = `<i class="ti ti-circle" style="font-size:14px;color:var(--text3);flex-shrink:0;"></i>
+    <input type="text" value="${esc(val)}" placeholder="チェック項目を入力...">
+    <span class="drag-handle" draggable="false" aria-hidden="true"><i class="ti ti-grip-vertical"></i></span>
+    <button class="remove-btn" onclick="removeRowEl(this,'check','tm')"><i class="ti ti-x"></i></button>`;
+  c.appendChild(row); initDragSort('tm-checks-container');
+}
+
+/* タスク種類セレクトボックスを全箇所で再描画 */
+function refreshTypeSelects() {
+  const options = '<option value="">選択してください</option>' +
+    taskTypes.map(t => `<option value="${esc(t.name)}">${esc(t.name)}</option>`).join('');
+  ['f-type', 'e-type'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value;
+    el.innerHTML = options;
+    el.value = cur;
+  });
+}
+
+
+/* =============================================================
+   共通：入力行の削除・番号更新
+   ============================================================= */
+function updateNums(containerId) {
+  document.querySelectorAll('#' + containerId + ' .step-num').forEach((el,i) => { el.textContent = i+1; });
+}
+
+function removeRowEl(btn, type, prefix) {
+  btn.parentElement.remove();
+  if (type === 'step') {
+    const map = { e: 'e-steps-container', f: 'steps-container', tm: 'tm-steps-container' };
+    updateNums(map[prefix] || 'steps-container');
+  }
+}
+
+/* =============================================================
+   ドラッグ＆ドロップによる行の並び替え
+   ─ 各コンテナに対して initDragSort() を呼ぶことで有効化
+   ─ ハンドル（.drag-handle）を掴んでドロップした位置に挿入
+   ============================================================= */
+let dragSrc = null; /* 現在ドラッグ中の行要素 */
+
+/**
+ * 指定コンテナ内の既存行＋新規追加行すべてに
+ * ドラッグイベントを付与する MutationObserver を設定する。
+ * コンテナIDごとに1回だけ呼べばよい。
+ */
+const _dragInited = new Set();
+function initDragSort(containerId) {
+  if (_dragInited.has(containerId)) return;
+  _dragInited.add(containerId);
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  /* 既存行にイベントを付与 */
+  Array.from(container.children).forEach(row => attachDrag(row, containerId));
+
+  /* 新規行追加時にも自動で付与 */
+  new MutationObserver(mutations => {
+    mutations.forEach(m => {
+      m.addedNodes.forEach(node => {
+        if (node.nodeType === 1) attachDrag(node, containerId);
+      });
+    });
+  }).observe(container, { childList: true });
+}
+
+function attachDrag(row, containerId) {
+  const handle = row.querySelector('.drag-handle');
+  if (!handle || handle._dragAttached) return;
+  handle._dragAttached = true;
+
+  /* マウスダウン時だけ draggable を ON にする
+     （テキスト入力中の誤作動を防ぐ） */
+  handle.addEventListener('mousedown', () => { row.draggable = true; });
+  document.addEventListener('mouseup',  () => { row.draggable = false; }, { passive: true });
+
+  row.addEventListener('dragstart', e => {
+    dragSrc = row;
+    row.classList.add('row-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+  });
+
+  row.addEventListener('dragend', () => {
+    dragSrc = null;
+    row.classList.remove('row-dragging');
+    document.querySelectorAll('.row-drag-over').forEach(el => el.classList.remove('row-drag-over'));
+    row.draggable = false;
+    updateNums(containerId);
+  });
+
+  row.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    document.querySelectorAll('.row-drag-over').forEach(el => el.classList.remove('row-drag-over'));
+    if (dragSrc && dragSrc !== row) row.classList.add('row-drag-over');
+  });
+
+  row.addEventListener('dragleave', () => {
+    row.classList.remove('row-drag-over');
+  });
+
+  row.addEventListener('drop', e => {
+    e.preventDefault();
+    row.classList.remove('row-drag-over');
+    if (!dragSrc || dragSrc === row) return;
+    const container = row.parentElement;
+    const rows      = Array.from(container.children);
+    const srcIdx    = rows.indexOf(dragSrc);
+    const tgtIdx    = rows.indexOf(row);
+    if (srcIdx < tgtIdx) {
+      container.insertBefore(dragSrc, row.nextElementSibling);
+    } else {
+      container.insertBefore(dragSrc, row);
+    }
+    updateNums(containerId);
+  });
+}
+
+
+/* =============================================================
+   モーダル共通
+   ============================================================= */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+function overlayClick(e, id) {
+  if (e.target === document.getElementById(id)) closeModal(id);
+}
+
+
+/* =============================================================
+   エクスポート／インポート
+   ============================================================= */
+function exportData() {
+  if (!tasks.length) { alert('エクスポートするデータがありません。'); return; }
+  const json = JSON.stringify(tasks, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const d    = new Date();
+  const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  a.href = url; a.download = `tasks_${stamp}.json`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) throw new Error('形式が正しくありません');
+      const existingIds = new Set(tasks.map(t => t.id));
+      let added = 0, skipped = 0;
+      for (const t of imported) {
+        if (existingIds.has(t.id)) { skipped++; }
+        else { await apiCreateTask(t); tasks.push(t); existingIds.add(t.id); added++; }
+      }
+      if (useAPI) { await loadTasks(); } else { saveTasks(); }
+      renderMain(); checkNotifications();
+      alert(`インポート完了！\n追加: ${added}件　重複スキップ: ${skipped}件`);
+    } catch(err) {
+      alert('読み込みに失敗しました。正しいJSONファイルを選択してください。\n' + err.message);
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+
+/* =============================================================
+   初期化
+   ============================================================= */
+const days = ['日','月','火','水','木','金','土'];
+const now  = new Date();
+document.getElementById('date-label').textContent =
+  `${now.getMonth()+1}月${now.getDate()}日（${days[now.getDay()]}）`;
+
+/* 非同期初期化 */
+(async () => {
+  /* サーバー疎通確認 */
+  await checkAPI();
+
+  /* データ読み込み */
+  await loadTaskTypes();
+  await loadTasks();
+
+  /* 種類が空なら初期データを投入 */
+  if (!taskTypes.length) {
+    for (const t of DEFAULT_TYPES) { await apiCreateType(t); taskTypes.push(t); }
+  }
+  /* タスクが空ならサンプルデータを投入 */
+  if (!tasks.length) {
+    const SAMPLES = [
+      { id:1, name:'田中さんへ提案書送付', type:'メール送信', created:'2025-05-18', deadline:'2025-05-22', completedDate:'', memo:'件名に案件番号を記載すること', status:'active', steps:['Outlookを開く','新規メール作成','添付ファイルを確認する','送信前に宛名を確認する'], checks:['宛名は正しいですか？','添付ファイルは付いていますか？','件名は入力していますか？'], checksDone:[] },
+      { id:2, name:'ABC社へ月次報告書提出', type:'報告書提出', created:'2025-05-15', deadline:'2025-05-20', completedDate:'', memo:'前月比のデータを含めること', status:'active', steps:['Excelで報告書を作成する','上長に確認を取る','メールに添付して送信する'], checks:['数値に誤りはありませんか？','上長の承認は得ましたか？'], checksDone:[] },
+      { id:3, name:'社内勉強会の資料作成', type:'書類作成', created:'2025-05-10', deadline:'2025-05-25', completedDate:'2025-05-12', memo:'PowerPointで作成', status:'done', steps:['テーマを決める','スライドを作成する','参加者に共有する'], checks:['誤字脱字の確認をしましたか？'], checksDone:['誤字脱字の確認をしましたか？'] },
+    ];
+    for (const t of SAMPLES) { await apiCreateTask(t); tasks.push(t); }
+  }
+
+  /* 画面描画 */
+  refreshTypeSelects();
+  addStepField();
+  addCheckField();
+  renderMain();
+  checkNotifications();
+
+  /* 接続モードを画面に表示 */
+  const modeEl = document.createElement('span');
+  modeEl.style.cssText = 'font-size:11px;padding:2px 8px;border-radius:99px;margin-left:8px;vertical-align:middle;';
+  if (useAPI) {
+    modeEl.style.background = '#EAF3DE'; modeEl.style.color = '#27500A';
+    modeEl.textContent = '● SQLite接続中';
+  } else {
+    modeEl.style.background = '#FEF3E2'; modeEl.style.color = '#7A4100';
+    modeEl.textContent = '● ローカル保存';
+  }
+  document.querySelector('h1').appendChild(modeEl);
+})();
+
+</script>
+</body>
+</html>
