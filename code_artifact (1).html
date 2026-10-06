@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ぽかぽか趣味ブログ - Game & Card Openings</title>
+    <!-- Tailwind CSS with Typography plugin -->
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Zen Maru Gothic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                        },
+                        pastel: {
+                            pink: '#FFEDF3',
+                            pinkBorder: '#FFB6C1',
+                            yellow: '#FFFBEA',
+                            yellowBorder: '#FFE29A',
+                            blue: '#E0F2FE',
+                            blueBorder: '#BAE6FD',
+                            green: '#DCFCE7',
+                            greenBorder: '#86EFAC',
+                            purple: '#F3E8FF',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Zen Maru Gothic"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: #FAFAF7;
+            background-image: radial-gradient(#F3E8FF 1.5px, transparent 1.5px), radial-gradient(#FEF3C7 1.5px, #FAFAF7 1.5px);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+        }
+
+        .card-hover {
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 0 12px 24px -6px rgba(251, 191, 36, 0.25);
+        }
+
+        /* Toast notification animation */
+        @keyframes slideIn {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(-100%); opacity: 0; }
+        }
+        .toast-enter { animation: slideIn 0.3s forwards cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+        .toast-exit { animation: slideOut 0.3s forwards; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #FAF5FF; }
+        ::-webkit-scrollbar-thumb { background: #FCD34D; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #F59E0B; }
+    </style>
+</head>
+<body class="text-slate-700 min-h-screen flex flex-col antialiased">
+
+    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
+
+    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b-2 border-amber-200/60 shadow-sm transition-all duration-200">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+            
+            <!-- Left Spacer / Navigation Shortcut -->
+            <div class="hidden sm:flex items-center gap-2 text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200">
+                <i class="fa-solid fa-sparkles text-amber-400"></i> My Hobby Diary
+            </div>
+
+            <!-- CENTERED LOGO (User Request) -->
+            <div class="text-center my-1 sm:my-0 cursor-pointer mx-auto" onclick="showSummaryPage()">
+                <div class="inline-flex items-center gap-2 bg-gradient-to-r from-amber-400 via-rose-400 to-sky-400 bg-clip-text text-transparent">
+                    <span class="text-2xl sm:text-3xl font-black tracking-wider">✨ ぽかぽか日記 ✨</span>
+                </div>
+                <p class="text-[11px] font-bold text-slate-400 tracking-widest mt-0.5">GAME & CARD OPENING BLOG</p>
+            </div>
+
+            <!-- Right Spacer / Reader Status -->
+            <div class="hidden sm:flex items-center gap-2 text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+                <i class="fa-regular fa-eye"></i> 閲覧専用モード
+            </div>
+
+        </div>
+    </header>
+
+    <section class="max-w-5xl mx-auto px-4 mt-6 w-full">
+        <div class="bg-gradient-to-r from-amber-100 via-rose-100 to-sky-100 rounded-3xl p-6 sm:p-8 border-2 border-white shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+            <div class="relative z-10 text-center sm:text-left">
+                <span class="bg-white/80 text-amber-600 text-xs font-black px-3 py-1 rounded-full border border-amber-200 inline-block mb-2">
+                    WELCOME TO MY BLOG
+                </span>
+                <h1 class="text-xl sm:text-2xl font-black text-slate-800 mb-2">
+                    ゲームの感想・カード開封結果を気ままに記録中！🎮🃏
+                </h1>
+                <p class="text-sm text-slate-600 font-medium max-w-lg">
+                    日常の中で楽しんだ新作ゲームのプレイメモや、トレーディングカードの開封結果などを自由に投稿している個人ブログです。
+                </p>
+            </div>
+            <div class="flex gap-3 text-3xl sm:text-4xl text-amber-500 bg-white/70 p-4 rounded-2xl border border-white shadow-inner">
+                <span class="hover:scale-125 transition-transform cursor-pointer" title="ゲーム">🎮</span>
+                <span class="hover:scale-125 transition-transform cursor-pointer" title="カード">🎴</span>
+                <span class="hover:scale-125 transition-transform cursor-pointer" title="スター">⭐</span>
+                <span class="hover:scale-125 transition-transform cursor-pointer" title="雑記">✍️</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- MAIN CONTAINER (Dynamically switched between Summary & Detail Pages) -->
+    <main class="max-w-5xl mx-auto px-4 py-8 flex-grow w-full">
+
+        <div id="view-summary" class="space-y-6">
+            
+            <!-- Category Filter Tabs -->
+            <div class="flex items-center justify-between flex-wrap gap-3 border-b border-slate-200 pb-4">
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 w-full sm:w-auto" id="category-tabs">
+                    <button onclick="filterCategory('all')" class="cat-btn active bg-amber-400 text-white font-bold text-sm px-4 py-2 rounded-full shadow-sm transition-all whitespace-nowrap" data-cat="all">
+                        ✨ すべての投稿
+                    </button>
+                    <button onclick="filterCategory('game')" class="cat-btn bg-white hover:bg-slate-100 text-slate-600 font-bold text-sm px-4 py-2 rounded-full border border-slate-200 transition-all whitespace-nowrap" data-cat="game">
+                        🎮 ゲーム感想
+                    </button>
+                    <button onclick="filterCategory('card')" class="cat-btn bg-white hover:bg-slate-100 text-slate-600 font-bold text-sm px-4 py-2 rounded-full border border-slate-200 transition-all whitespace-nowrap" data-cat="card">
+                        🎴 カード開封結果
+                    </button>
+                    <button onclick="filterCategory('diary')" class="cat-btn bg-white hover:bg-slate-100 text-slate-600 font-bold text-sm px-4 py-2 rounded-full border border-slate-200 transition-all whitespace-nowrap" data-cat="diary">
+                        ☕ 雑記・お気に入り
+                    </button>
+                </div>
+                
+                <span id="article-count" class="text-xs font-bold text-slate-400">全 0 件の記事</span>
+            </div>
+
+            <!-- Article Cards Grid Container -->
+            <div id="articles-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamically Populated via JavaScript -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden text-center py-16 bg-white rounded-3xl border-2 border-dashed border-slate-200 p-8">
+                <div class="text-5xl mb-3">📝</div>
+                <h3 class="text-lg font-bold text-slate-700 mb-1">まだ記事が登録されていません</h3>
+                <p class="text-sm text-slate-400 mb-4">記事データ（Markdown）を追加してください。</p>
+            </div>
+
+        </div>
+
+        <div id="view-detail" class="hidden space-y-6">
+            
+            <!-- Navigation Back Button -->
+            <div class="flex items-center justify-between">
+                <button onclick="showSummaryPage()" class="inline-flex items-center gap-2 text-slate-600 hover:text-amber-600 font-bold text-sm bg-white hover:bg-amber-50 border border-slate-200 px-4 py-2 rounded-full shadow-sm transition-all">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>まとめ一覧に戻る</span>
+                </button>
+            </div>
+
+            <!-- Single Article Content Container -->
+            <article class="bg-white rounded-3xl border-2 border-amber-100 shadow-sm overflow-hidden p-6 sm:p-10">
+                <!-- Header Info -->
+                <div id="detail-header" class="border-b border-slate-100 pb-6 mb-6">
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        <span id="detail-category-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
+                            カテゴリー
+                        </span>
+                        <span id="detail-date" class="text-xs font-bold text-slate-400 flex items-center gap-1">
+                            <i class="fa-regular fa-calendar"></i> 2026/10/06
+                        </span>
+                    </div>
+                    <h1 id="detail-title" class="text-2xl sm:text-3xl font-black text-slate-800 leading-snug">
+                        記事タイトル
+                    </h1>
+                </div>
+
+                <!-- Main Image Banner -->
+                <div id="detail-image-box" class="mb-8 rounded-2xl overflow-hidden max-h-[420px] bg-slate-100 flex items-center justify-center border border-slate-200">
+                    <img id="detail-image" src="" alt="アイキャッチ" class="w-full h-full object-cover">
+                </div>
+
+                <!-- Special Block: Rating or Card Results -->
+                <div id="detail-special-block" class="mb-8 hidden">
+                    <!-- Populated dynamically (e.g. Star ratings or Card rarity lists) -->
+                </div>
+
+                <!-- Article Body Text (Markdown Rendered) -->
+                <div id="detail-body" class="prose prose-slate max-w-none text-slate-700 leading-relaxed font-medium text-base sm:text-lg">
+                    本文がここに入ります。
+                </div>
+
+                <!-- Footer Engagement -->
+                <div class="mt-10 pt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
+                    <button id="btn-like" onclick="addLike()" class="flex items-center gap-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-bold text-sm px-5 py-2.5 rounded-full transition-all active:scale-95">
+                        <i class="fa-solid fa-heart text-rose-500"></i>
+                        <span>いいね！</span>
+                        <span id="detail-like-count" class="bg-white text-rose-600 px-2 py-0.5 rounded-full text-xs border border-rose-200">0</span>
+                    </button>
+
+                    <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
+                        <span>シェアする：</span>
+                        <button onclick="copyArticleLink()" class="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all" title="リンクをコピー">
+                            <i class="fa-solid fa-link"></i>
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Comment Box Section -->
+            <section class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8">
+                <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-comments text-amber-500"></i> 一言メモ・コメント
+                </h3>
+                
+                <div id="comments-list" class="space-y-3 mb-4">
+                    <!-- Comments populated here -->
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="text" id="comment-input" placeholder="感想の補足やメモを残す..." class="flex-grow px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+                    <button onclick="submitComment()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-all">
+                        追加
+                    </button>
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <script>
+        /* 
+         * ========================================================
+         * 📝 【記事の追加・更新方法】
+         * 下記の `articles` 配列に直接新しい記事オブジェクトをMarkdown形式で追加できます。
+         * ========================================================
+         */
+        const articles = [
+            {
+                id: '1',
+                title: '【カード開封】最新パック「シャイニーマスター」を2BOX開封してみた結果！',
+                category: 'card',
+                date: '2026/10/05',
+                image: 'https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?auto=format&fit=crop&w=800&q=80',
+                cardHighlights: 'リザードンex SAR, ナンジャモ SR, ミュウツー AR',
+                likes: 12,
+                comments: ['神引きおめでとうございます！', 'うらやましい！'],
+                body: `待ちに待った新弾「**シャイニーマスター**」の発売日！  
+朝一でカードショップに並んで無事に **2BOX** ゲットできました。
+
+---
+
+### 📦 開封結果のハイライト
+
+1BOX目からは期待通りのトレーナーSRが出現！  
+そして2BOX目を剥いていたところ…なんと**最後のパックから大本命のレアカードが降臨**しました！
+
+* **1BOX目:** ナンジャモ SR
+* **2BOX目:** リザードンex SAR, ミュウツー AR
+
+> パックを開ける瞬間のドキドキ感はやっぱり何物にも代えがたいですね。  
+> 次の対戦イベントで早速デッキに組んで試してみたいと思います！`
+            },
+            {
+                id: '2',
+                title: '【ゲーム感想】話題の新作オープンワールドRPG『ファンタジー・エクスプローラー』クリアレビュー！',
+                category: 'game',
+                date: '2026/09/28',
+                image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80',
+                rating: '5',
+                likes: 24,
+                comments: ['グラフィック本当にきれいですよね！'],
+                body: `プレイ時間 **約50時間** でメインストーリーを無事クリアしました！  
+率直な感想としては、今年遊んだゲームの中でもトップクラスの完成度です。
+
+---
+
+### 良かった点・気になった点
+
+#### ✨ 良かった点
+- **グラフィックが圧巻:** どこを切り取ってもフォトモード級の美しさ。
+- **自由な探索:** 崖登りや滑空メカニクスがとにかく爽快。
+- **サウンド:** フィールド曲と戦闘曲の遷移がシームレスで没入感バツグン。
+
+#### ⚠️ 気になった点
+- 終盤のボスバトルでの難易度スパイクがやや急。
+- インベントリのアイテム整理画面が少し複雑。
+
+---
+
+### 総評
+探索好きなプレイヤーには間違いなく**手放しでおすすめできる一作**です！`
+            },
+            {
+                id: '3',
+                title: '【雑記】ゲーム部屋のデスク周りを模様替え！ライティングを追加してみた',
+                category: 'diary',
+                date: '2026/09/20',
+                image: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=800&q=80',
+                likes: 8,
+                comments: [],
+                body: `週末を使ってゲーム部屋のデスク周りを一新しました！
+
+モニター裏に温かみのある **LEDスマートライトテープ** を貼り付けたところ、夜のゲームプレイ時の没入感が格段にアップ。
+
+* 間接照明で目の負担も軽減
+* お気に入りのカードを飾る**専用アクリルスタンド**を設置
+
+お気に入りの空間に仕上がって大満足です！`
+            }
+        ];
+
+        // Global State Variables
+        let currentFilter = 'all';
+        let currentActiveArticleId = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderSummaryPage();
+        });
+
+        function showSummaryPage() {
+            document.getElementById('view-summary').classList.remove('hidden');
+            document.getElementById('view-detail').classList.add('hidden');
+            currentActiveArticleId = null;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            renderSummaryPage();
+        }
+
+        function showDetailPage(articleId) {
+            const article = articles.find(a => a.id === articleId);
+            if (!article) return;
+
+            currentActiveArticleId = articleId;
+
+            // Populate Detail Elements
+            document.getElementById('detail-title').innerText = article.title;
+            document.getElementById('detail-date').innerHTML = `<i class="fa-regular fa-calendar"></i> ${article.date}`;
+            document.getElementById('detail-image').src = article.image || 'https://placehold.co/800x400/FFFBEA/F59E0B?text=No+Image';
+            
+            // Render Markdown
+            document.getElementById('detail-body').innerHTML = typeof marked !== 'undefined' ? marked.parse(article.body) : article.body;
+            
+            document.getElementById('detail-like-count').innerText = article.likes || 0;
+
+            // Category Badge
+            const badge = document.getElementById('detail-category-badge');
+            if (article.category === 'game') {
+                badge.innerText = '🎮 ゲーム感想';
+                badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200';
+            } else if (article.category === 'card') {
+                badge.innerText = '🎴 カード開封結果';
+                badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200';
+            } else {
+                badge.innerText = '☕ 雑記';
+                badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-200';
+            }
+
+            // Special Extra Content (Ratings / Cards)
+            const specialBlock = document.getElementById('detail-special-block');
+            specialBlock.innerHTML = '';
+            
+            if (article.category === 'game' && article.rating) {
+                specialBlock.classList.remove('hidden');
+                const stars = '⭐'.repeat(parseInt(article.rating, 10));
+                specialBlock.innerHTML = `
+                    <div class="bg-amber-50 rounded-2xl p-4 border border-amber-200 flex items-center justify-between">
+                        <span class="text-xs font-bold text-amber-800">🎮 ゲーム満足度評価</span>
+                        <span class="text-base font-bold text-amber-600">${stars} (${article.rating}.0 / 5.0)</span>
+                    </div>
+                `;
+            } else if (article.category === 'card' && article.cardHighlights) {
+                specialBlock.classList.remove('hidden');
+                const cardsArray = article.cardHighlights.split(',').map(c => c.trim()).filter(Boolean);
+                let cardsHtml = cardsArray.map(c => `<span class="bg-white border border-rose-200 text-rose-700 px-3 py-1 rounded-lg text-xs font-bold shadow-xs">✨ ${c}</span>`).join(' ');
+                
+                specialBlock.innerHTML = `
+                    <div class="bg-gradient-to-r from-rose-50 to-pink-50 rounded-2xl p-4 border border-rose-200 space-y-2">
+                        <span class="text-xs font-bold text-rose-800 block">🎴 主な獲得・当たりカード一覧</span>
+                        <div class="flex flex-wrap gap-2">${cardsHtml}</div>
+                    </div>
+                `;
+            } else {
+                specialBlock.classList.add('hidden');
+            }
+
+            // Populate Comments
+            renderComments();
+
+            // Toggle view visibility
+            document.getElementById('view-summary').classList.add('hidden');
+            document.getElementById('view-detail').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderSummaryPage() {
+            const grid = document.getElementById('articles-grid');
+            const emptyState = document.getElementById('empty-state');
+            grid.innerHTML = '';
+
+            const filtered = articles.filter(a => currentFilter === 'all' || a.category === currentFilter);
+            document.getElementById('article-count').innerText = `全 ${filtered.length} 件の記事`;
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            filtered.forEach(item => {
+                let catBadge = '';
+                if (item.category === 'game') {
+                    catBadge = '<span class="bg-amber-100 text-amber-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full">🎮 ゲーム感想</span>';
+                } else if (item.category === 'card') {
+                    catBadge = '<span class="bg-rose-100 text-rose-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full">🎴 カード開封</span>';
+                } else {
+                    catBadge = '<span class="bg-sky-100 text-sky-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full">☕ 雑記</span>';
+                }
+
+                // Plain text summary for grid view
+                const plainText = item.body.replace(/[#*`>_-]/g, '');
+
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-3xl border-2 border-slate-100 overflow-hidden card-hover cursor-pointer flex flex-col justify-between shadow-xs';
+                card.onclick = () => showDetailPage(item.id);
+
+                card.innerHTML = `
+                    <div>
+                        <!-- Thumbnail Image -->
+                        <div class="h-44 w-full overflow-hidden bg-slate-100 relative">
+                            <img src="${item.image || 'https://placehold.co/600x400/FFFBEA/F59E0B?text=Blog'}" alt="アイキャッチ" class="w-full h-full object-cover">
+                            <div class="absolute top-3 left-3">${catBadge}</div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="p-5 space-y-2">
+                            <div class="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                                <i class="fa-regular fa-calendar"></i> ${item.date}
+                            </div>
+                            <h2 class="font-black text-slate-800 text-base line-clamp-2 leading-snug hover:text-amber-600 transition-colors">
+                                ${item.title}
+                            </h2>
+                            <p class="text-xs text-slate-500 line-clamp-3 font-medium leading-relaxed">
+                                ${plainText}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Footer Meta -->
+                    <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-400">
+                        <span class="flex items-center gap-1 text-rose-500">
+                            <i class="fa-solid fa-heart"></i> ${item.likes || 0}
+                        </span>
+                        <span class="text-amber-600 font-bold hover:underline">
+                            記事を読む <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </span>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        // Category Filter Handling
+        function filterCategory(cat) {
+            currentFilter = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = 'cat-btn active bg-amber-400 text-white font-bold text-sm px-4 py-2 rounded-full shadow-sm transition-all whitespace-nowrap';
+                } else {
+                    btn.className = 'cat-btn bg-white hover:bg-slate-100 text-slate-600 font-bold text-sm px-4 py-2 rounded-full border border-slate-200 transition-all whitespace-nowrap';
+                }
+            });
+            renderSummaryPage();
+        }
+
+        function addLike() {
+            if (!currentActiveArticleId) return;
+            const article = articles.find(a => a.id === currentActiveArticleId);
+            if (article) {
+                article.likes = (article.likes || 0) + 1;
+                document.getElementById('detail-like-count').innerText = article.likes;
+                showToast('❤️ いいね！を送信しました');
+            }
+        }
+
+        function renderComments() {
+            const article = articles.find(a => a.id === currentActiveArticleId);
+            const container = document.getElementById('comments-list');
+            container.innerHTML = '';
+
+            if (!article || !article.comments || article.comments.length === 0) {
+                container.innerHTML = '<p class="text-xs font-medium text-slate-400 italic">まだコメントがありません</p>';
+                return;
+            }
+
+            article.comments.forEach(c => {
+                const commentEl = document.createElement('div');
+                commentEl.className = 'bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs font-medium text-slate-700 flex items-start gap-2';
+                commentEl.innerHTML = `
+                    <span class="text-amber-500 font-bold">💬</span>
+                    <span>${c}</span>
+                `;
+                container.appendChild(commentEl);
+            });
+        }
+
+        function submitComment() {
+            const input = document.getElementById('comment-input');
+            const text = input.value.trim();
+            if (!text || !currentActiveArticleId) return;
+
+            const article = articles.find(a => a.id === currentActiveArticleId);
+            if (article) {
+                if (!article.comments) article.comments = [];
+                article.comments.push(text);
+                input.value = '';
+                renderComments();
+                showToast('💬 メモ・コメントを追加しました');
+            }
+        }
+
+        // Copy Article Link Helper
+        function copyArticleLink() {
+            const dummy = document.createElement('input');
+            document.body.appendChild(dummy);
+            dummy.value = window.location.href;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+            showToast('🔗 記事のURLをコピーしました');
+        }
+
+        // Custom Toast Notification Handler
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast-enter bg-slate-800 text-white font-bold text-xs px-5 py-3 rounded-full shadow-lg flex items-center gap-2 pointer-events-auto border border-slate-700';
+            toast.innerHTML = message;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.replace('toast-enter', 'toast-exit');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

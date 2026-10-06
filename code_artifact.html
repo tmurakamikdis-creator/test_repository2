@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ぽかぽか趣味ブログ - Game & Card Openings</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Zen Maru Gothic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                        },
+                        pastel: {
+                            pink: '#FFEDF3',
+                            pinkBorder: '#FFB6C1',
+                            yellow: '#FFFBEA',
+                            yellowBorder: '#FFE29A',
+                            blue: '#E0F2FE',
+                            blueBorder: '#BAE6FD',
+                            green: '#DCFCE7',
+                            greenBorder: '#86EFAC',
+                            purple: '#F3E8FF',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Zen Maru Gothic"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: #FAFAF7;
+            background-image: radial-gradient(#F3E8FF 1.5px, transparent 1.5px), radial-gradient(#FEF3C7 1.5px, #FAFAF7 1.5px);
+            background-size: 60px 60px;
+            background-position: 0 0, 30px 30px;
+        }
+
+        .card-hover {
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 0 12px 24px -6px rgba(251, 191, 36, 0.25);
+        }
+
+        /* Toast notification animation */
+        @keyframes slideIn {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(-100%); opacity: 0; }
+        }
+        .toast-enter { animation: slideIn 0.3s forwards cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+        .toast-exit { animation: slideOut 0.3s forwards; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #FAF5FF; }
+        ::-webkit-scrollbar-thumb { background: #FCD34D; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #F59E0B; }
+    </style>
+</head>
+<body class="text-slate-700 min-h-screen flex flex-col antialiased">
+
+    <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
+
+    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b-2 border-amber-200/60 shadow-sm transition-all duration-200">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+            
+            <!-- Left Spacer / Navigation Shortcut -->
+            <div class="hidden sm:flex items-center gap-2 text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200">
+                <i class="fa-solid fa-sparkles text-amber-400"></i> My Hobby Diary
+            </div>
+
+            <!-- CENTERED LOGO (User Request) -->
+            <div class="text-center my-1 sm:my-0 cursor-pointer" onclick="showSummaryPage()">
+                <div class="inline-flex items-center gap-2 bg-gradient-to-r from-amber-400 via-rose-400 to-sky-400 bg-clip-text text-transparent">
+                    <span class="text-2xl sm:text-3xl font-black tracking-wider">✨ ぽかぽか日記 ✨</span>
+                </div>
+                <p class="text-[11px] font-bold text-slate-400 tracking-widest mt-0.5">GAME & CARD OPENING BLOG</p>
+            </div>
+
+            <!-- Right Action: Post New Article Button -->
+            <div class="flex items-center gap-2">
+                <button onclick="openPostModal()" class="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-sm px-4 py-2 rounded-full shadow-md shadow-amber-200 active:scale-95 transition-all">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>記事を投稿する</span>
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <section class="max-w-5xl mx-auto px-4 mt-6 w-full">
+        <div class="bg-gradient-to-r from-amber-100 via-rose-100 to-sky-100 rounded-3xl p-6 sm:p-8 border-2 border-white shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+            <div class="relative z-10 text-center sm:text-left">
+                <span class="bg-white/80 text-amber-600 text-xs font-black px-3 py-1 rounded-full border border-amber-200 inline-block mb-2">
+                    WELCOME TO MY BLOG
+                </span>
+                <h1 class="text-xl sm:text-2xl font-black text-slate-800 mb-2">
+                    ゲームの感想・カード開封結果を気ままに記録中！🎮🃏
+                </h1>
+                <p class="text-sm text-slate-600 font-medium max-w-lg">
+                    日常の中で楽しんだ新作ゲームのプレイメモや、トレーディングカードの開封結果などを自由に投稿している個人ブログです。
+                </p>
+            </div>
+            <div class="flex gap-3 text-3xl sm:text-4xl text-amber-500 bg-white/70 p-4 rounded-2xl border border-white shadow-inner">
+                <span class="hover:scale-125 transition-transform cursor-pointer" title="ゲーム">🎮</span>
+                <span class="hover:scale-125 transition-transform cursor-pointer" title="カード">🎴</span>
+                <span class="hover:scale-125 transition-transform cursor-pointer" title="スター">⭐</span>
+                <span class="hover:scale-125 transition-transform cursor-pointer" title="雑記">✍️</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- MAIN CONTAINER (Dynamically switched between Summary & Detail Pages) -->
+    <main class="max-w-5xl mx-auto px-4 py-8 flex-grow w-full">
+
+        <div id="view-summary" class="space-y-6">
+            
+            <!-- Category Filter Tabs -->
+            <div class="flex items-center justify-between flex-wrap gap-3 border-b border-slate-200 pb-4">
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 w-full sm:w-auto" id="category-tabs">
+                    <button onclick="filterCategory('all')" class="cat-btn active bg-amber-400 text-white font-bold text-sm px-4 py-2 rounded-full shadow-sm transition-all whitespace-nowrap" data-cat="all">
+                        ✨ すべての投稿
+                    </button>
+                    <button onclick="filterCategory('game')" class="cat-btn bg-white hover:bg-slate-100 text-slate-600 font-bold text-sm px-4 py-2 rounded-full border border-slate-200 transition-all whitespace-nowrap" data-cat="game">
+                        🎮 ゲーム感想
+                    </button>
+                    <button onclick="filterCategory('card')" class="cat-btn bg-white hover:bg-slate-100 text-slate-600 font-bold text-sm px-4 py-2 rounded-full border border-slate-200 transition-all whitespace-nowrap" data-cat="card">
+                        🎴 カード開封結果
+                    </button>
+                    <button onclick="filterCategory('diary')" class="cat-btn bg-white hover:bg-slate-100 text-slate-600 font-bold text-sm px-4 py-2 rounded-full border border-slate-200 transition-all whitespace-nowrap" data-cat="diary">
+                        ☕ 雑記・お気に入り
+                    </button>
+                </div>
+                
+                <span id="article-count" class="text-xs font-bold text-slate-400">全 0 件の記事</span>
+            </div>
+
+            <!-- Article Cards Grid Container -->
+            <div id="articles-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamically Populated via JavaScript -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden text-center py-16 bg-white rounded-3xl border-2 border-dashed border-slate-200 p-8">
+                <div class="text-5xl mb-3">📝</div>
+                <h3 class="text-lg font-bold text-slate-700 mb-1">まだ記事が投稿されていません</h3>
+                <p class="text-sm text-slate-400 mb-4">右上の「記事を投稿する」ボタンから最初の思い出を記録しましょう！</p>
+                <button onclick="openPostModal()" class="bg-amber-400 hover:bg-amber-500 text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-md">
+                    記事を書く
+                </button>
+            </div>
+
+        </div>
+
+        <div id="view-detail" class="hidden space-y-6">
+            
+            <!-- Navigation Back Button -->
+            <div class="flex items-center justify-between">
+                <button onclick="showSummaryPage()" class="inline-flex items-center gap-2 text-slate-600 hover:text-amber-600 font-bold text-sm bg-white hover:bg-amber-50 border border-slate-200 px-4 py-2 rounded-full shadow-sm transition-all">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>まとめ一覧に戻る</span>
+                </button>
+
+                <div class="flex items-center gap-2">
+                    <button id="btn-delete-article" class="text-xs text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 font-bold px-3 py-1.5 rounded-full transition-all">
+                        <i class="fa-solid fa-trash-can mr-1"></i> 記事を削除
+                    </button>
+                </div>
+            </div>
+
+            <!-- Single Article Content Container -->
+            <article class="bg-white rounded-3xl border-2 border-amber-100 shadow-sm overflow-hidden p-6 sm:p-10">
+                <!-- Header Info -->
+                <div id="detail-header" class="border-b border-slate-100 pb-6 mb-6">
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        <span id="detail-category-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
+                            カテゴリー
+                        </span>
+                        <span id="detail-date" class="text-xs font-bold text-slate-400 flex items-center gap-1">
+                            <i class="fa-regular fa-calendar"></i> 2026/10/06
+                        </span>
+                    </div>
+                    <h1 id="detail-title" class="text-2xl sm:text-3xl font-black text-slate-800 leading-snug">
+                        記事タイトル
+                    </h1>
+                </div>
+
+                <!-- Main Image Banner -->
+                <div id="detail-image-box" class="mb-8 rounded-2xl overflow-hidden max-h-[420px] bg-slate-100 flex items-center justify-center border border-slate-200">
+                    <img id="detail-image" src="" alt="アイキャッチ" class="w-full h-full object-cover">
+                </div>
+
+                <!-- Special Block: Rating or Card Results -->
+                <div id="detail-special-block" class="mb-8 hidden">
+                    <!-- Populated dynamically (e.g. Star ratings or Card rarity lists) -->
+                </div>
+
+                <!-- Article Body Text -->
+                <div id="detail-body" class="prose max-w-none text-slate-700 leading-relaxed font-medium text-base sm:text-lg space-y-4 whitespace-pre-wrap">
+                    本文がここに入ります。
+                </div>
+
+                <!-- Footer Engagement -->
+                <div class="mt-10 pt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
+                    <button id="btn-like" onclick="addLike()" class="flex items-center gap-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-bold text-sm px-5 py-2.5 rounded-full transition-all active:scale-95">
+                        <i class="fa-solid fa-heart text-rose-500"></i>
+                        <span>いいね！</span>
+                        <span id="detail-like-count" class="bg-white text-rose-600 px-2 py-0.5 rounded-full text-xs border border-rose-200">0</span>
+                    </button>
+
+                    <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
+                        <span>シェアする：</span>
+                        <button onclick="copyArticleLink()" class="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all" title="リンクをコピー">
+                            <i class="fa-solid fa-link"></i>
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Comment Box Section -->
+            <section class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8">
+                <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-comments text-amber-500"></i> 一言メモ・コメント
+                </h3>
+                
+                <div id="comments-list" class="space-y-3 mb-4">
+                    <!-- Comments populated here -->
+                </div>
+
+                <div class="flex gap-2">
+                    <input type="text" id="comment-input" placeholder="感想の補足やメモを残す..." class="flex-grow px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+                    <button onclick="submitComment()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-all">
+                        追加
+                    </button>
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <div id="post-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl border-2 border-amber-200 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative my-auto">
+            
+            <!-- Close Button -->
+            <button onclick="closePostModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 w-8 h-8 rounded-full flex items-center justify-center transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="mb-6">
+                <h2 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                    <span class="text-2xl">✍️</span> 新しい記事を投稿する
+                </h2>
+                <p class="text-xs text-slate-400 font-bold mt-1">ゲームの感想やカード開封結果を自由に記録しましょう！</p>
+            </div>
+
+            <form id="post-form" onsubmit="handlePostSubmit(event)" class="space-y-4">
+                
+                <!-- Title -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">タイトル <span class="text-rose-500">*</span></label>
+                    <input type="text" id="form-title" required placeholder="例: 【ポケモンカード】新弾1BOX開封！UR降臨！？" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-300">
+                </div>
+
+                <!-- Category -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">カテゴリー <span class="text-rose-500">*</span></label>
+                    <select id="form-category" onchange="toggleFormCategoryFields()" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-300">
+                        <option value="game">🎮 ゲーム感想</option>
+                        <option value="card">🎴 カード開封結果</option>
+                        <option value="diary">☕ 雑記・お気に入り</option>
+                    </select>
+                </div>
+
+                <!-- Dynamic Extra Inputs: Game Rating -->
+                <div id="form-game-extra" class="bg-amber-50 p-3 rounded-2xl border border-amber-200">
+                    <label class="block text-xs font-bold text-amber-800 mb-1">ゲーム満足度評価</label>
+                    <div class="flex items-center gap-2">
+                        <select id="form-rating" class="px-3 py-1.5 rounded-lg border border-amber-300 text-xs font-bold text-amber-900 bg-white">
+                            <option value="5">⭐⭐⭐⭐⭐ (大満足 / 5.0)</option>
+                            <option value="4">⭐⭐⭐⭐☆ (面白い / 4.0)</option>
+                            <option value="3">⭐⭐⭐☆☆ (普通 / 3.0)</option>
+                            <option value="2">⭐⭐☆☆☆ (まあまあ / 2.0)</option>
+                            <option value="1">⭐☆☆☆☆ (微妙 / 1.0)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dynamic Extra Inputs: Card Openings -->
+                <div id="form-card-extra" class="hidden bg-rose-50 p-3 rounded-2xl border border-rose-200 space-y-2">
+                    <label class="block text-xs font-bold text-rose-800">主なゲット結果（レアカードなど）</label>
+                    <input type="text" id="form-card-highlights" placeholder="例: リザードンSAR, ピカチュウAR, トレーナーズSR" class="w-full px-3 py-2 rounded-xl border border-rose-200 text-xs font-bold bg-white">
+                </div>
+
+                <!-- Image Presets / URL -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">アイキャッチ画像（選択またはURL）</label>
+                    <div class="grid grid-cols-4 gap-2 mb-2">
+                        <button type="button" onclick="selectPresetImg('game1')" class="img-preset-btn border-2 border-amber-400 rounded-xl overflow-hidden h-14 relative group">
+                            <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover">
+                            <span class="absolute inset-0 bg-black/40 text-white text-[10px] font-bold flex items-center justify-center">レトロ</span>
+                        </button>
+                        <button type="button" onclick="selectPresetImg('game2')" class="img-preset-btn border-2 border-transparent rounded-xl overflow-hidden h-14 relative group">
+                            <img src="https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover">
+                            <span class="absolute inset-0 bg-black/40 text-white text-[10px] font-bold flex items-center justify-center">ネオン</span>
+                        </button>
+                        <button type="button" onclick="selectPresetImg('card1')" class="img-preset-btn border-2 border-transparent rounded-xl overflow-hidden h-14 relative group">
+                            <img src="https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover">
+                            <span class="absolute inset-0 bg-black/40 text-white text-[10px] font-bold flex items-center justify-center">カード</span>
+                        </button>
+                        <button type="button" onclick="selectPresetImg('card2')" class="img-preset-btn border-2 border-transparent rounded-xl overflow-hidden h-14 relative group">
+                            <img src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover">
+                            <span class="absolute inset-0 bg-black/40 text-white text-[10px] font-bold flex items-center justify-center">グッズ</span>
+                        </button>
+                    </div>
+                    <input type="url" id="form-image-url" placeholder="または画像URLを直接入力 https://..." class="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs text-slate-600">
+                </div>
+
+                <!-- Body Content -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">本文 <span class="text-rose-500">*</span></label>
+                    <textarea id="form-body" rows="6" required placeholder="遊んだ感想やカードの当たりの確率、興奮したポイントなどを自由に書きましょう！" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-amber-300"></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-2 flex justify-end gap-3">
+                    <button type="button" onclick="closePostModal()" class="px-5 py-2.5 rounded-full text-slate-500 text-xs font-bold hover:bg-slate-100">
+                        キャンセル
+                    </button>
+                    <button type="submit" class="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-sm px-6 py-2.5 rounded-full shadow-md shadow-amber-200 active:scale-95 transition-all">
+                        投稿を保存する
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t border-slate-200 mt-12 py-8 text-center text-xs font-bold text-slate-400">
+        <div class="max-w-5xl mx-auto px-4 space-y-2">
+            <p class="text-slate-600">✨ ぽかぽか日記 - GAME & CARD OPENING BLOG ✨</p>
+            <p>© 2026 My Personal Blog. Built for hobby logging.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Preset default articles data
+        const defaultArticles = [
+            {
+                id: '1',
+                title: '【カード開封】最新パック「シャイニーマスター」を2BOX開封してみた結果！',
+                category: 'card',
+                date: '2026/10/05',
+                image: 'https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?auto=format&fit=crop&w=800&q=80',
+                body: `待ちに待った新弾「シャイニーマスター」の発売日！\n朝一でカードショップに並んで無事に2BOXゲットできました。\n\n目玉は何と言っても最高レアリティのスペシャルイラスト版！\n1BOX目からは期待通りのトレーナーSRが出現。そして2BOX目を剥いていたところ…なんと最後のパックから大本命のレアカードが降臨！\n\nパックを開ける瞬間のドキドキ感はやっぱり何物にも代えがたいですね。次の対戦イベントで早速デッキに組みたいと思います！`,
+                cardHighlights: 'リザードンex SAR, ナンジャモ SR, ミュウツー AR',
+                likes: 12,
+                comments: ['神引きおめでとうございます！', 'うらやましい！']
+            },
+            {
+                id: '2',
+                title: '【ゲーム感想】話題の新作オープンワールドRPG『ファンタジー・エクスプローラー』クリアレビュー！',
+                category: 'game',
+                date: '2026/09/28',
+                image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80',
+                body: `プレイ時間約50時間でメインストーリーを無事クリアしました！\n\n【良かった点】\n・グラフィックが非常に美しく、どこを切り取っても絵になる。\n・自由度が高く、崖登りや滑空が爽快。\n・音楽が幻想的でフィールド探索の没入感が高い。\n\n【気になった点】\n・終盤のボスバトルでの難易度スパイクがやや急。\n・インベントリ管理が少し複雑。\n\n全体として今年遊んだゲームの中でもトップクラスの満足度でした！探索好きには絶対おすすめの1作です。`,
+                rating: '5',
+                likes: 24,
+                comments: ['グラフィック本当にきれいですよね！']
+            },
+            {
+                id: '3',
+                title: '【雑記】ゲーム部屋のデスク周りを模様替え！ライティングを追加してみた',
+                category: 'diary',
+                date: '2026/09/20',
+                image: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=800&q=80',
+                body: `週末を使ってゲーム部屋のデスク周りを一新しました。\nモニター裏に温かみのあるライトテープを貼り付けたところ、夜のゲームプレイ体験が格段にアップ！\n\nお気に入りのトレーディングカードを飾る専用アクリルスタンドも設置して満足度の高い空間になりました。`,
+                likes: 8,
+                comments: []
+            }
+        ];
+
+        // Global State Variables
+        let articles = [];
+        let currentFilter = 'all';
+        let currentActiveArticleId = null;
+        let selectedPresetImgUrl = 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80';
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadArticlesFromStorage();
+            renderSummaryPage();
+
+            // Select initial preset image in form
+            selectPresetImg('game1');
+        });
+
+        function loadArticlesFromStorage() {
+            const stored = localStorage.getItem('my_hobby_blog_articles');
+            if (stored) {
+                try {
+                    articles = JSON.parse(stored);
+                } catch (e) {
+                    articles = [...defaultArticles];
+                }
+            } else {
+                articles = [...defaultArticles];
+                saveArticlesToStorage();
+            }
+        }
+
+        function saveArticlesToStorage() {
+            localStorage.setItem('my_hobby_blog_articles', JSON.stringify(articles));
+        }
+
+        function showSummaryPage() {
+            document.getElementById('view-summary').classList.remove('hidden');
+            document.getElementById('view-detail').classList.add('hidden');
+            currentActiveArticleId = null;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            renderSummaryPage();
+        }
+
+        function showDetailPage(articleId) {
+            const article = articles.find(a => a.id === articleId);
+            if (!article) return;
+
+            currentActiveArticleId = articleId;
+
+            // Populate Detail Elements
+            document.getElementById('detail-title').innerText = article.title;
+            document.getElementById('detail-date').innerHTML = `<i class="fa-regular fa-calendar"></i> ${article.date}`;
+            document.getElementById('detail-image').src = article.image || 'https://placehold.co/800x400/FFFBEA/F59E0B?text=No+Image';
+            document.getElementById('detail-body').innerText = article.body;
+            document.getElementById('detail-like-count').innerText = article.likes || 0;
+
+            // Category Badge
+            const badge = document.getElementById('detail-category-badge');
+            if (article.category === 'game') {
+                badge.innerText = '🎮 ゲーム感想';
+                badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200';
+            } else if (article.category === 'card') {
+                badge.innerText = '🎴 カード開封結果';
+                badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200';
+            } else {
+                badge.innerText = '☕ 雑記';
+                badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-200';
+            }
+
+            // Special Extra Content (Ratings / Cards)
+            const specialBlock = document.getElementById('detail-special-block');
+            specialBlock.innerHTML = '';
+            
+            if (article.category === 'game' && article.rating) {
+                specialBlock.classList.remove('hidden');
+                const stars = '⭐'.repeat(parseInt(article.rating, 10));
+                specialBlock.innerHTML = `
+                    <div class="bg-amber-50 rounded-2xl p-4 border border-amber-200 flex items-center justify-between">
+                        <span class="text-xs font-bold text-amber-800">🎮 ゲーム満足度評価</span>
+                        <span class="text-base font-bold text-amber-600">${stars} (${article.rating}.0 / 5.0)</span>
+                    </div>
+                `;
+            } else if (article.category === 'card' && article.cardHighlights) {
+                specialBlock.classList.remove('hidden');
+                const cardsArray = article.cardHighlights.split(',').map(c => c.trim()).filter(Boolean);
+                let cardsHtml = cardsArray.map(c => `<span class="bg-white border border-rose-200 text-rose-700 px-3 py-1 rounded-lg text-xs font-bold shadow-xs">✨ ${c}</span>`).join(' ');
+                
+                specialBlock.innerHTML = `
+                    <div class="bg-gradient-to-r from-rose-50 to-pink-50 rounded-2xl p-4 border border-rose-200 space-y-2">
+                        <span class="text-xs font-bold text-rose-800 block">🎴 主な獲得・当たりカード一覧</span>
+                        <div class="flex flex-wrap gap-2">${cardsHtml}</div>
+                    </div>
+                `;
+            } else {
+                specialBlock.classList.add('hidden');
+            }
+
+            // Populate Comments
+            renderComments();
+
+            // Set Delete Action
+            document.getElementById('btn-delete-article').onclick = () => deleteArticle(articleId);
+
+            // Toggle view visibility
+            document.getElementById('view-summary').classList.add('hidden');
+            document.getElementById('view-detail').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderSummaryPage() {
+            const grid = document.getElementById('articles-grid');
+            const emptyState = document.getElementById('empty-state');
+            grid.innerHTML = '';
+
+            const filtered = articles.filter(a => currentFilter === 'all' || a.category === currentFilter);
+            document.getElementById('article-count').innerText = `全 ${filtered.length} 件の記事`;
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            filtered.forEach(item => {
+                let catBadge = '';
+                if (item.category === 'game') {
+                    catBadge = '<span class="bg-amber-100 text-amber-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full">🎮 ゲーム感想</span>';
+                } else if (item.category === 'card') {
+                    catBadge = '<span class="bg-rose-100 text-rose-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full">🎴 カード開封</span>';
+                } else {
+                    catBadge = '<span class="bg-sky-100 text-sky-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full">☕ 雑記</span>';
+                }
+
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-3xl border-2 border-slate-100 overflow-hidden card-hover cursor-pointer flex flex-col justify-between shadow-xs';
+                card.onclick = () => showDetailPage(item.id);
+
+                card.innerHTML = `
+                    <div>
+                        <!-- Thumbnail Image -->
+                        <div class="h-44 w-full overflow-hidden bg-slate-100 relative">
+                            <img src="${item.image || 'https://placehold.co/600x400/FFFBEA/F59E0B?text=Blog'}" alt="アイキャッチ" class="w-full h-full object-cover">
+                            <div class="absolute top-3 left-3">${catBadge}</div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="p-5 space-y-2">
+                            <div class="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                                <i class="fa-regular fa-calendar"></i> ${item.date}
+                            </div>
+                            <h2 class="font-black text-slate-800 text-base line-clamp-2 leading-snug hover:text-amber-600 transition-colors">
+                                ${item.title}
+                            </h2>
+                            <p class="text-xs text-slate-500 line-clamp-3 font-medium leading-relaxed">
+                                ${item.body}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Footer Meta -->
+                    <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-400">
+                        <span class="flex items-center gap-1 text-rose-500">
+                            <i class="fa-solid fa-heart"></i> ${item.likes || 0}
+                        </span>
+                        <span class="text-amber-600 font-bold hover:underline">
+                            記事を読む <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </span>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        // Category Filter Handling
+        function filterCategory(cat) {
+            currentFilter = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = 'cat-btn active bg-amber-400 text-white font-bold text-sm px-4 py-2 rounded-full shadow-sm transition-all whitespace-nowrap';
+                } else {
+                    btn.className = 'cat-btn bg-white hover:bg-slate-100 text-slate-600 font-bold text-sm px-4 py-2 rounded-full border border-slate-200 transition-all whitespace-nowrap';
+                }
+            });
+            renderSummaryPage();
+        }
+
+        function addLike() {
+            if (!currentActiveArticleId) return;
+            const article = articles.find(a => a.id === currentActiveArticleId);
+            if (article) {
+                article.likes = (article.likes || 0) + 1;
+                document.getElementById('detail-like-count').innerText = article.likes;
+                saveArticlesToStorage();
+                showToast('❤️ いいね！を送信しました');
+            }
+        }
+
+        function renderComments() {
+            const article = articles.find(a => a.id === currentActiveArticleId);
+            const container = document.getElementById('comments-list');
+            container.innerHTML = '';
+
+            if (!article || !article.comments || article.comments.length === 0) {
+                container.innerHTML = '<p class="text-xs font-medium text-slate-400 italic">まだコメントがありません</p>';
+                return;
+            }
+
+            article.comments.forEach(c => {
+                const commentEl = document.createElement('div');
+                commentEl.className = 'bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs font-medium text-slate-700 flex items-start gap-2';
+                commentEl.innerHTML = `
+                    <span class="text-amber-500 font-bold">💬</span>
+                    <span>${c}</span>
+                `;
+                container.appendChild(commentEl);
+            });
+        }
+
+        function submitComment() {
+            const input = document.getElementById('comment-input');
+            const text = input.value.trim();
+            if (!text || !currentActiveArticleId) return;
+
+            const article = articles.find(a => a.id === currentActiveArticleId);
+            if (article) {
+                if (!article.comments) article.comments = [];
+                article.comments.push(text);
+                saveArticlesToStorage();
+                input.value = '';
+                renderComments();
+                showToast('💬 メモ・コメントを追加しました');
+            }
+        }
+
+        function openPostModal() {
+            document.getElementById('post-modal').classList.remove('hidden');
+        }
+
+        function closePostModal() {
+            document.getElementById('post-modal').classList.add('hidden');
+        }
+
+        function toggleFormCategoryFields() {
+            const cat = document.getElementById('form-category').value;
+            const gameExtra = document.getElementById('form-game-extra');
+            const cardExtra = document.getElementById('form-card-extra');
+
+            if (cat === 'game') {
+                gameExtra.classList.remove('hidden');
+                cardExtra.classList.add('hidden');
+            } else if (cat === 'card') {
+                gameExtra.classList.add('hidden');
+                cardExtra.classList.remove('hidden');
+            } else {
+                gameExtra.classList.add('hidden');
+                cardExtra.classList.add('hidden');
+            }
+        }
+
+        function selectPresetImg(key) {
+            const presets = {
+                game1: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80',
+                game2: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=800&q=80',
+                card1: 'https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?auto=format&fit=crop&w=800&q=80',
+                card2: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80'
+            };
+            selectedPresetImgUrl = presets[key];
+
+            // Visual feedback on preset buttons
+            document.querySelectorAll('.img-preset-btn').forEach(btn => {
+                btn.classList.replace('border-amber-400', 'border-transparent');
+            });
+            event.currentTarget.classList.replace('border-transparent', 'border-amber-400');
+            document.getElementById('form-image-url').value = '';
+        }
+
+        function handlePostSubmit(e) {
+            e.preventDefault();
+            const title = document.getElementById('form-title').value.trim();
+            const category = document.getElementById('form-category').value;
+            const body = document.getElementById('form-body').value.trim();
+            const customImg = document.getElementById('form-image-url').value.trim();
+
+            const finalImage = customImg || selectedPresetImgUrl;
+
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
+
+            const newArticle = {
+                id: Date.now().toString(),
+                title,
+                category,
+                date: dateStr,
+                image: finalImage,
+                body,
+                likes: 0,
+                comments: []
+            };
+
+            if (category === 'game') {
+                newArticle.rating = document.getElementById('form-rating').value;
+            } else if (category === 'card') {
+                newArticle.cardHighlights = document.getElementById('form-card-highlights').value.trim();
+            }
+
+            articles.unshift(newArticle);
+            saveArticlesToStorage();
+
+            // Reset Form & Close
+            document.getElementById('post-form').reset();
+            closePostModal();
+
+            showToast('🎉 記事を新しく投稿しました！');
+            showSummaryPage();
+        }
+
+        // Delete Article Function
+        function deleteArticle(articleId) {
+            // Replacing alert/confirm with direct user-friendly inline deletion flow
+            if (window.confirm("この記事を削除してもよろしいですか？")) {
+                articles = articles.filter(a => a.id !== articleId);
+                saveArticlesToStorage();
+                showToast('🗑️ 記事を削除しました');
+                showSummaryPage();
+            }
+        }
+
+        // Copy Article Link Helper
+        function copyArticleLink() {
+            const dummy = document.createElement('input');
+            document.body.appendChild(dummy);
+            dummy.value = window.location.href;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+            showToast('🔗 記事のURLをコピーしました');
+        }
+
+        // Custom Toast Notification Handler
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast-enter bg-slate-800 text-white font-bold text-xs px-5 py-3 rounded-full shadow-lg flex items-center gap-2 pointer-events-auto border border-slate-700';
+            toast.innerHTML = message;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.replace('toast-enter', 'toast-exit');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
